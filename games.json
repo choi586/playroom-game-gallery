@@ -3,9 +3,9 @@
   "games": [
     {
       "id": "gemini-example",
-      "name": "Gemini 게임 · 링크 예시",
+      "name": "김수호 - 무한의 계단",
       "url": "https://gemini.google.com/share/c15138d7f4e1?social_preview=false&skid=9c354a17-265f-41a4-98d3-c6e238cce68b",
-      "thumbnail": "assets/cover-1.svg"
+      "thumbnail": "assets/kim-suho-infinite-stairs.jpg"
     }
   ]
 }
