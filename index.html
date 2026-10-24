@@ -1,0 +1,12 @@
+<!doctype html>
+<html lang="ko">
+<head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="theme-color" content="#10131b"><meta name="description" content="좋아하는 웹 게임을 한곳에서 만나세요."><title>PLAYROOM · 나의 게임 아케이드</title><link rel="stylesheet" href="style.css"><script src="app.js" defer></script></head>
+<body>
+<header><h1 class="site-title"><a class="brand" href="./">PLAYROOM</a></h1><button id="adminToggle" aria-pressed="false">⚙ 관리 모드</button></header>
+<main>
+<section id="adminPanel" hidden aria-label="게임 관리"><div class="panel-heading"><div><h2>컬렉션 관리</h2><p>이 기기의 브라우저에 임시 저장됩니다. 공개 반영은 JSON 파일을 교체하세요.</p></div><button id="addGame" class="primary">＋ 게임 추가</button></div><div class="tools"><button id="exportData">↓ JSON 내보내기</button><button id="importButton">↑ JSON 가져오기</button><input id="importData" type="file" accept=".json,application/json" hidden><button id="resetData">공개 목록으로 되돌리기</button></div><p class="note">관리 모드는 편집 도구이며 로그인 기능이 아닙니다. 방문자의 편집은 공개 목록을 바꾸지 않습니다.</p></section>
+<section class="collection"><div class="collection-top"><h2>모든 게임 <span id="count">0</span></h2><label class="search"><span aria-hidden="true">⌕</span><input id="search" type="search" placeholder="게임 이름 검색" aria-label="게임 이름 검색"></label></div><div id="grid" class="grid"></div><div id="empty" hidden class="empty"><h3>게임을 찾을 수 없어요</h3><p>다른 이름으로 검색하거나 관리 모드에서 게임을 추가하세요.</p></div></section>
+<p id="status" role="status" aria-live="polite"></p>
+</main>
+<dialog id="editor"><form id="gameForm"><div class="dialog-top"><h2 id="editorTitle">게임 추가</h2><button type="button" id="closeEditor" aria-label="닫기">✕</button></div><label>게임 이름<input id="gameName" maxlength="100" required placeholder="게임 이름을 입력하세요"></label><label>게임 링크<input id="gameUrl" type="url" required placeholder="https://…"></label><label>썸네일 파일<input id="gameImage" type="file" accept="image/png,image/jpeg,image/webp,image/gif"></label><p class="note">PNG, JPG, WebP, GIF · 최대 3MB. 이미지는 JSON에 포함됩니다.</p><img id="imagePreview" alt="선택한 썸네일 미리보기" hidden><button id="removeImage" type="button">썸네일 지우기</button><p id="formError" role="alert"></p><div class="dialog-actions"><button id="cancelEdit" type="button">취소</button><button class="primary" type="submit">저장하기</button></div></form></dialog>
+</body></html>
