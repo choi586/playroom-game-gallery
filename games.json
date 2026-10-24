@@ -42,6 +42,18 @@
       "name": "이한나 - 3D 버거 매장",
       "url": "https://gemini.google.com/share/a6f6665f71cb?social_preview=false&skid=a8fe6446-86fe-4676-b037-7873875544e5",
       "thumbnail": "assets/lee-hanna-burger-store.png"
+    },
+    {
+      "id": "ahn-junhyun-rhythm",
+      "name": "안준현 - 리듬게임",
+      "url": "https://gemini.google.com/share/4131db87ac1a?social_preview=false&skid=e3e2e8e4-1805-4b12-957a-fe1d1ff20cd2",
+      "thumbnail": "assets/ahn-junhyun-rhythm.png"
+    },
+    {
+      "id": "jung-jaeyi-speed-clicker",
+      "name": "정재이 - 스피드 클리커",
+      "url": "https://gemini.google.com/share/c5af8cbf84fa?social_preview=false&skid=8fcca93d-50d5-4f3f-80d0-dbddef03379b",
+      "thumbnail": "assets/jung-jaeyi-speed-clicker.png"
     }
   ]
 }
