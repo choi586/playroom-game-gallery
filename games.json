@@ -14,12 +14,6 @@
       "thumbnail": "assets/lee-woojae-virus-company.png"
     },
     {
-      "id": "choi-yeowon-grass-tycoon",
-      "name": "최여원 - 잔디 타이쿤",
-      "url": "https://gemini.google.com/share/5cb7ffb4962c?social_preview=false&skid=52028641-450e-4745-a1bb-15ca2dad34c1",
-      "thumbnail": ""
-    },
-    {
       "id": "lee-junseo-two-player-mole",
       "name": "이준서 - 2인용 두더지게임",
       "url": "https://gemini.google.com/share/01bcf31c9ffe?social_preview=false&skid=1b1e4269-473f-4958-bba2-b4b2419539f6",
@@ -71,6 +65,12 @@
       "id": "choi-yeowon-yut-game",
       "name": "최여원 - 윳놀이",
       "url": "https://gemini.google.com/share/b07a4dc5fed4?social_preview=false&skid=c1c45729-fbaf-41eb-a929-1b38eefec426",
+      "thumbnail": "assets/choi-yeowon-yut-game.avif"
+    },
+    {
+      "id": "choi-yeowon-grass-tycoon",
+      "name": "최여원 - 잔디 타이쿤",
+      "url": "https://gemini.google.com/share/5cb7ffb4962c?social_preview=false&skid=52028641-450e-4745-a1bb-15ca2dad34c1",
       "thumbnail": ""
     }
   ]
