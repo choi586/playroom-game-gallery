@@ -30,7 +30,7 @@ canvas{display:block;width:100%;height:auto;aspect-ratio:16/9;image-rendering:au
         <div class="dialog">
           <div class="hint" id="modalHint">MISSION 01 · FOUR SKILLS</div>
           <h2 id="modalTitle">나만의 미니미로<br>도시를 지켜라!</h2>
-          <p id="modalDesc">네 가지 기술을 골라 위험을 피하고 60초 동안 살아남으세요.<br>각 장애물마다 필요한 동작이 달라요!</p>
+          <p id="modalDesc">네 가지 기술을 골라 위험을 피하고 60초 동안 살아남으세요.<br>20초마다 레벨이 올라가고 장애물이 빨라져요!</p>
           <div class="skills" id="skillGuide">
             <div class="skill"><b>Z</b><span>공격 · 몬스터</span></div>
             <div class="skill"><b>↑</b><span>점프 · 바닥</span></div>
@@ -76,9 +76,9 @@ for(const [k,src] of Object.entries(SPRITE_DATA)){const img=new Image();img.src=
 let raf=0,last=0,now=0,dt=0;
 const TYPES={drone:{label:'몬스터',key:'Z',color:'#d9a3ff',tip:'Z · 공격'},spike:{label:'바닥 장애물',key:'↑',color:'#ffd677',tip:'↑ · 점프'},beam:{label:'레이저',key:'↓',color:'#ff97db',tip:'↓ · 숙이기'},charger:{label:'돌진 로봇',key:'X',color:'#ff9a91',tip:'X · 뒤로 피하기'}};
 const SEQ=['drone','spike','beam','charger','spike','drone','beam','charger','drone','spike','charger','beam'];
-const state={mode:'intro',life:3,score:0,elapsed:0,spawnIn:1.1,spawnIndex:0,obstacles:[],particles:[],texts:[],jumpY:0,jumpV:0,attackT:0,attackCD:0,dodgeT:0,dodgeCD:0,down:false,hurtT:0,shake:0,playerFrame:0,successes:0,combo:0,streak:0};
+const state={mode:'intro',life:3,score:0,elapsed:0,spawnIn:1.1,spawnIndex:0,level:0,obstacles:[],particles:[],texts:[],jumpY:0,jumpV:0,attackT:0,attackCD:0,dodgeT:0,dodgeCD:0,down:false,hurtT:0,shake:0,playerFrame:0,successes:0,combo:0,streak:0};
 let soundOn=true;
-function reset(){Object.assign(state,{mode:'playing',life:3,score:0,elapsed:0,spawnIn:1.1,spawnIndex:0,obstacles:[],particles:[],texts:[],jumpY:0,jumpV:0,attackT:0,attackCD:0,dodgeT:0,dodgeCD:0,down:false,hurtT:0,shake:0,playerFrame:0,successes:0,combo:0,streak:0});now=performance.now();last=now;overlay.classList.add('hidden');pauseBtn.textContent='⏸ 일시정지';}
+function reset(){Object.assign(state,{mode:'playing',life:3,score:0,elapsed:0,spawnIn:1.1,spawnIndex:0,level:0,obstacles:[],particles:[],texts:[],jumpY:0,jumpV:0,attackT:0,attackCD:0,dodgeT:0,dodgeCD:0,down:false,hurtT:0,shake:0,playerFrame:0,successes:0,combo:0,streak:0});now=performance.now();last=now;overlay.classList.add('hidden');pauseBtn.textContent='⏸ 일시정지';}
 function showModal({hint,title,desc,button}){hintEl.textContent=hint;titleEl.innerHTML=title;descEl.innerHTML=desc;startBtn.textContent=button;skillGuide.style.display=(state.mode==='intro'?'grid':'none');overlay.classList.remove('hidden');}
 startBtn.addEventListener('click',()=>{if(state.mode==='paused'){state.mode='playing';overlay.classList.add('hidden');pauseBtn.textContent='⏸ 일시정지';last=performance.now();}else reset();});
 pauseBtn.addEventListener('click',()=>{if(state.mode==='playing'){state.mode='paused';showModal({hint:'PAUSE',title:'잠깐 쉬어가기',desc:'마음의 준비가 되면 다시 시작!',button:'계속하기 ▶'});pauseBtn.textContent='▶ 계속하기';state.down=false;}else if(state.mode==='paused'){state.mode='playing';overlay.classList.add('hidden');pauseBtn.textContent='⏸ 일시정지';last=performance.now();}});
@@ -102,8 +102,8 @@ function update(step){if(state.mode!=='playing')return;state.elapsed+=step;
  state.dodgeT=Math.max(0,state.dodgeT-step);state.dodgeCD=Math.max(0,state.dodgeCD-step);
  state.hurtT=Math.max(0,state.hurtT-step);state.shake=Math.max(0,state.shake-step*26);
  if(state.jumpY>0||state.jumpV>0){state.jumpY+=state.jumpV*step;state.jumpV-=1650*step;if(state.jumpY<=0){state.jumpY=0;state.jumpV=0;burst(PX+40,GROUND,'#bba4df',5);}}
- state.spawnIn-=step;if(state.spawnIn<=0){spawn();state.spawnIn=2.12-Math.min(.46,state.elapsed/150)+Math.random()*.16;}
- const speed=302+Math.min(74,state.elapsed*1.3);
+ state.spawnIn-=step;if(state.spawnIn<=0){spawn();state.spawnIn=[2.2,1.95,1.75][Math.min(2,Math.floor(state.elapsed/20))]+Math.random()*.16;}
+ const speed=[302,330,360][Math.min(2,Math.floor(state.elapsed/20))];
  for(const o of state.obstacles){o.x-=speed*step;o.phase+=step*3.3;
    if(o.kind==='drone'&& !o.resolved && state.attackT>0 && o.x>PX+35 && o.x<PX+165)actionSuccess(o);
    if(o.x<0 && !o.resolved) {o.resolved=true;} 
@@ -112,7 +112,7 @@ function update(step){if(state.mode!=='playing')return;state.elapsed+=step;
  state.obstacles=state.obstacles.filter(o=>o.x+o.w>-90 && !(o.resolved&&o.kind==='drone'));
  for(const p of state.particles){p.x+=p.vx*step;p.y+=p.vy*step;p.vy+=130*step;p.ttl-=step;}state.particles=state.particles.filter(p=>p.ttl>0);
  for(const t of state.texts){t.y-=38*step;t.t-=step;}state.texts=state.texts.filter(t=>t.t>0);
- state.playerFrame+=step;state.score+=step*4;
+ const level=Math.min(3,Math.floor(state.elapsed/20)+1);if(level!==state.level){state.level=level;floatText(440,190,'LEVEL '+level+'!', '#ffe295');}state.playerFrame+=step;state.score+=step*4;
 }
 function rr(x,y,w,h,r,fill,stroke){ctx.beginPath();ctx.roundRect(x,y,w,h,r);if(fill){ctx.fillStyle=fill;ctx.fill();}if(stroke){ctx.strokeStyle=stroke;ctx.lineWidth=1;ctx.stroke();}}
 const stars=Array.from({length:48},(_,i)=>({x:(i*179+55)%960,y:(i*71+11)%275,s:1+(i%3),tw:i%7}));
@@ -155,7 +155,7 @@ function hud(){rr(18,17,226,61,12,'#191325dc','#89668f');ctx.fillStyle='#dec6ee'
  rr(702,17,240,61,12,'#191325dc','#89668f');ctx.fillStyle='#e9d3f5';ctx.font='bold 14px system-ui';ctx.fillText('⏱  남은 시간',715,40);ctx.fillStyle='#fff';ctx.font='900 26px system-ui';ctx.fillText(Math.ceil(60-state.elapsed)+'초',850,59);
  // progress bar
  ctx.fillStyle='#46304b';ctx.fillRect(702,87,240,5);ctx.fillStyle='#e7a4e7';ctx.fillRect(702,87,240*(state.elapsed/60),5);
- rr(18,87,332,30,8,'#21142edc','#8d638f');ctx.fillStyle='#f3d2ff';ctx.font='bold 14px system-ui';ctx.fillText('목표: 60초 생존 · 4가지 기술 사용!',27,107);
+ rr(18,87,332,30,8,'#21142edc','#8d638f');ctx.fillStyle='#f3d2ff';ctx.font='bold 14px system-ui';ctx.fillText('LEVEL '+Math.min(3,Math.floor(state.elapsed/20)+1)+' / 3 · 60초 생존!',27,107);
  if(state.combo>=2){ctx.font='bold 17px system-ui';ctx.fillStyle='#ffdc8e';ctx.fillText(`✨ ${state.combo} COMBO!`,365,110)}
 }
 function draw(){ctx.save();ctx.clearRect(0,0,W,H);if(state.shake>0)ctx.translate((Math.random()-.5)*state.shake,(Math.random()-.5)*state.shake);background(state.elapsed);for(const o of state.obstacles){if(!o.resolved||o.kind!=='drone')enemy(o,state.elapsed);}player();for(const p of state.particles){ctx.globalAlpha=Math.min(1,p.ttl/.45);ctx.fillStyle=p.color;ctx.fillRect(p.x,p.y,p.size,p.size);}ctx.globalAlpha=1;for(const t of state.texts){ctx.globalAlpha=Math.min(1,t.t);ctx.font='bold 19px system-ui';ctx.fillStyle=t.color;ctx.fillText(t.text,t.x,t.y);}ctx.globalAlpha=1;hud();ctx.restore();}
