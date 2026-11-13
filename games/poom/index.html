@@ -1,0 +1,327 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+<title>품 — 섬마을의 닷새 (데모)</title>
+<link href="https://fonts.googleapis.com/css2?family=Gowun+Batang:wght@400;700&family=Noto+Sans+KR:wght@400;600&display=swap" rel="stylesheet">
+<style>
+:root{--bg:#1c1a17;--ink:#f1e9da;--acc:#e07b4f}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:'Noto Sans KR',sans-serif;display:flex;justify-content:center;min-height:100vh;-webkit-user-select:none;user-select:none;overscroll-behavior:none}
+#wrap{width:100%;max-width:920px;padding:12px}
+#hud{display:flex;gap:14px;flex-wrap:wrap;align-items:center;font-size:.9rem;padding:6px 2px;min-height:38px}
+#hud b{color:var(--acc)}
+#nb{margin-left:auto;border:1px solid #6b6253;background:#2a2622;color:var(--ink);border-radius:999px;padding:5px 12px;font:inherit;font-size:.82rem;cursor:pointer}
+#stage{position:relative;width:100%;aspect-ratio:16/10;border-radius:14px;overflow:hidden;box-shadow:0 10px 40px #0008;background:#000}
+canvas{width:100%;height:100%;display:block;touch-action:none}
+.ov{position:fixed;inset:0;z-index:10;display:flex;align-items:center;justify-content:center;background:#000a;padding:16px}
+.hide{display:none!important}
+.box{max-width:580px;width:100%;font-size:16px;background:#f6efe0;color:#2b2620;border-radius:14px;padding:22px 24px;font-family:'Gowun Batang',serif;line-height:1.85;white-space:pre-line;max-height:100%;overflow:auto}
+.box.dark{background:#141311;color:#efe7d8;border:1px solid #444}
+.box h2{margin:.1em 0 .4em;color:#b5482e;line-height:1.4}
+.box.dark h2{color:#e9b38f}
+.box h3{margin:1.1em 0 .2em;font-size:1rem;color:#e9b38f;font-family:'Noto Sans KR'}
+.box ul{margin:.2em 0;padding-left:1.2em;white-space:normal}
+.box li{margin:.25em 0}
+.box li.no{color:#6f675c;list-style:'·  '}
+.btn{font-family:'Noto Sans KR',sans-serif;margin:14px 6px 0 0;border:0;background:#b5482e;color:#fff;padding:10px 20px;border-radius:999px;font-size:.95rem;cursor:pointer}
+.btn.alt{background:#3d6b73}.btn:disabled{background:#8a8378;cursor:default}
+.note{font-size:.8rem;color:#a99f8f;border-top:1px solid #444;margin-top:14px;padding-top:10px;font-family:'Noto Sans KR';white-space:normal}
+#hint{font-size:.8rem;color:#b7ab97;padding:8px 2px}
+#rot{display:none;background:#e07b4f22;border:1px solid #e07b4f66;border-radius:10px;padding:8px 12px;margin:6px 0;font-size:.85rem}
+#act{position:absolute;right:10px;bottom:10px;z-index:5;touch-action:manipulation;border:0;border-radius:999px;padding:13px 20px;background:#e07b4fee;color:#fff;font-size:1.02rem;font-weight:600;display:none;cursor:pointer;box-shadow:0 4px 14px #0006}
+#cap{position:absolute;left:50%;top:10px;transform:translateX(-50%);z-index:4;background:#000a;color:#fff;border-radius:999px;padding:6px 16px;font-size:.88rem;max-width:92%;text-align:center;pointer-events:none}
+#dlg{position:absolute;left:8px;right:8px;bottom:8px;z-index:6;background:#fbf5e8f5;color:#2b2620;border-radius:12px;padding:12px 16px;font-family:'Gowun Batang',serif;line-height:1.7;cursor:pointer;border:2px solid #b5482e55;font-size:clamp(.82rem,2.4vw,1.02rem)}
+#dlg .who{font-family:'Noto Sans KR';font-weight:600;color:#b5482e;font-size:.85em}
+#dlg .go{float:right;font-family:'Noto Sans KR';font-size:.75em;color:#8a7f70}
+#toast{position:absolute;left:50%;top:46px;transform:translateX(-50%);z-index:7;background:#3d6b73;color:#fff;border-radius:10px;padding:8px 16px;font-size:.88rem;white-space:nowrap;transition:opacity .4s;opacity:0;pointer-events:none}
+.word{display:flex;gap:10px;border-bottom:1px dashed #cbbfa8;padding:6px 0;white-space:normal}
+.word b{min-width:7.5em;color:#b5482e}
+@media (max-width:700px) and (orientation:portrait){#rot{display:block}#wrap{padding:8px}#hint{font-size:.75rem}#act{font-size:.8rem;padding:8px 12px;right:6px;bottom:6px}#hud{font-size:.8rem;gap:9px}}
+@media (orientation:landscape) and (max-height:520px){#wrap{max-width:none;padding:4px;display:flex;flex-direction:column;align-items:center;height:100dvh}
+ #hud{font-size:.8rem;padding:2px;min-height:30px;width:100%;justify-content:center}#nb{margin-left:8px}#hint,#rot{display:none}#stage{height:calc(100dvh - 38px);width:auto;max-width:100%;border-radius:8px}}
+</style>
+</head>
+<body>
+<div id="wrap">
+ <div id="hud"></div>
+ <div id="rot">📱 휴대폰을 <b>가로로</b> 돌리면 화면 가득 크게 보여요. 이웃이나 집을 <b>톡 누르면</b> 걸어가서 바로 일해요.</div>
+ <div id="stage">
+  <canvas id="c"></canvas>
+  <div id="cap" class="hide"></div>
+  <div id="toast"></div>
+  <button id="act"></button>
+  <div id="dlg" class="hide"></div>
+ </div>
+ <div id="hint">이동: 방향키·WASD 또는 화면 터치 · 행동: 스페이스바·버튼, 또는 대상을 톡 누르기 · 하루 일을 마치면 우리 집으로 돌아갑니다</div>
+</div>
+<div class="ov hide" id="ov"><div class="box" id="box"></div></div>
+<script>
+if(!CanvasRenderingContext2D.prototype.roundRect)CanvasRenderingContext2D.prototype.roundRect=function(a,b,w,h){this.rect(a,b,w,h)};
+const $=id=>document.getElementById(id),cv=$('c'),x=cv.getContext('2d'),W=640,H=400;
+function fit(){const d=Math.min(3,window.devicePixelRatio||1)*Math.max(1,cv.clientWidth/W);cv.width=W*d;cv.height=H*d;x.setTransform(d,0,0,d,0,0)}
+addEventListener('resize',fit);setTimeout(fit,60);fit();
+function rng(s){return()=>{s|=0;s=s+0x6D2B79F5|0;let t=Math.imul(s^s>>>15,1|s);t=t+Math.imul(t^t>>>7,61|t)^t;return((t^t>>>14)>>>0)/4294967296}}
+
+/* ───────── 시나리오 데이터 ───────── */
+const POS={g:[112,160,58,160],d:[528,160,584,160],m:[122,318,58,322],b:[518,318,584,324]};
+const HOME={x:320,y:212},FIELD={x:400,y:308},TREE={x:232,y:322};
+const SCS={
+jeju:{key:'jeju',year:'1948년 가을',me:{c:'#a8683c',b:'#5a4636'},
+ intro:"1948년 가을, 한라산 자락의 작은 마을.\n당신은 열네 살입니다.\n\n억새가 하얗게 피었고, 닷새 뒤 큰 바람이 온다고 합니다.\n우리 집 초가지붕은 낡았습니다. 혼자서는 새로 이을 수 없습니다.\n\n이 마을에서는 품을 주고받습니다.\n내가 먼저 일해 주면, 그 사람이 내 일에 와 줍니다.",
+ days:["첫날.\n하루에 할 수 있는 일은 세 가지.\n이웃 일을 거들면 양식을 나눠 먹게 되고, 우리 밭을 매면 양식이 늘어난다.\n일을 거들 때마다 이웃은 이야기를 하나씩 들려준다.",
+  "둘째 날.\n아침 밥상에서 어른들이 말을 줄인다.\n아랫마을 학교 선생이 끌려갔다는 소문.\n\"애들 앞에서 그런 말 하지 마라.\"",
+  "셋째 날.\n마을 어귀 돌담에 종이가 붙었다.\n글 읽을 줄 아는 어른이 한참 서 있다가 아무 말 없이 돌아선다.\n해가 지면 오름 쪽에 작은 불빛이 보인다.",
+  "넷째 날.\n낯선 군복들이 마을을 지나간다.\n집집마다 식구 수를 적어 갔다.\n오늘은 아무도 큰 소리로 웃지 않는다. 내일이면 바람이 온다."],
+ amb:[null,['g','…애들 앞에선 말 마라.'],['d','…저 종이, 읽어 봤냐.'],['m','…오늘은 일찍 들어가라.']],
+ nb:[
+ {id:'g',name:'곰례 할망',k:'elder',c:'#8a6a4a',b:'#5d4a3a',task:'조 이삭 거두기',st:[
+  {t:'수눌음이라는 말',w:'sn',s:'"고맙다. 수눌음이 별거냐. 오늘 네가 내 밭 매면 내일은 내가 네 밭 매는 거지. 이 섬은 그렇게 살아왔다."'},
+  {t:'오사카로 간 큰아들',s:'"우리 큰아들은 배 타고 오사카 공장에 갔다. 편지가 끊긴 지 삼 년이다. 그래도 밥그릇은 매일 떠 놓는다."'},
+  {t:'작년 삼월의 총소리',w:'sa',s:'"작년 삼월 초하루에 성안에서 총소리가 났다더라. 구경하던 사람들이 맞았다고. 그 뒤로 이 섬이 조용할 날이 없구나."'}]},
+ {id:'d',name:'덕수 삼춘',k:'man',c:'#9a7448',b:'#4a3f35',task:'지붕 일 띠 엮기',st:[
+  {t:'삼춘이라는 말',w:'sc',s:'"삼춘이라 불러라. 이 섬에선 남자고 여자고 동네 어른은 다 삼춘이여. 피가 안 섞여도 식구라는 말이지."'},
+  {t:'돌아와 보니',s:'"해방되던 해에 징용 갔다 돌아왔다. 돌아와 보니 흉년에 돌림병에… 살기는 더 팍팍해졌더라."'},
+  {t:'돌담에 붙은 종이',s:'"바닷가에서 오 킬로 넘는 데는 다니지 말라는 방이 붙었다. 우리 마을이 딱 그 안이라. 밭이 여기 있는데 어디로 가라는 말이냐."'}]},
+ {id:'m',name:'말순 이모',k:'woman',baby:1,c:'#b08458',b:'#6a5040',task:'물 길어 주기',st:[
+  {t:'물허벅 지는 법',w:'mh',s:'"물허벅 지는 법 가르쳐 주마. 물이 귀한 마을이라 샘까지 한참 걸어야 한다. 둘이 가면 길이 짧아지지."'},
+  {t:'밤에 집에서 못 자는 사람',s:'"아기 아방은 요즘 밤에 집에서 못 잔다. 젊은 남자들은 낮에는 이쪽에서 찾고, 밤에는 저쪽에서 부른다니."'},
+  {t:'팽나무 밑의 약속',w:'ol',s:'"무슨 일이 나도 아기는 내가 업고 뛴다. 너는 올레 끝 팽나무 밑으로 와라. 거기서 만나자."'}]},
+ {id:'b',name:'봉수',k:'boy',c:'#7a8a6a',b:'#4a4438',task:'소 먹이기',st:[
+  {t:'테우리',w:'tw',s:'"소 모는 사람을 테우리라고 해. 아방이 가르쳐 줬어. 나도 크면 테우리 할 거야."'},
+  {t:'산으로 간 아방',s:'"아방은 산에 갔어. 나쁜 사람이라서 간 게 아니야. 그냥… 무서워서 숨은 거야."'},
+  {t:'오름의 불빛',s:'"밤에 오름에 불빛 보이지? 저거 아방일지도 몰라. 내가 여기 있다고 손 흔들면 보일까?"'}]}],
+ stormOk:'여러 손이 지붕 위에서 엇갈린다. 바람이 지붕을 흔들지만, 날려 보내지는 못한다.',stormNo:'혼자서는 지붕 한쪽밖에 잇지 못했다. 띠가 바람에 뜯겨 날아간다.',
+ ok:'바람이 지나갔다.\n밤늦게 모두 한방에 모여 고구마를 나눠 먹는다.\n봉수가 처음으로 소리 내어 웃는다.',fail:'밤새 빗물이 샜다.\n새벽에 곰례 할망이 문을 두드린다.\n"괜찮으냐. 날 밝으면 같이 고치자."',
+ after:'그해 십일월, 마을에 불이 났다.\n\n사람들은 흩어졌다.\n바닷가 마을로, 산으로, 굴로.\n누가 팽나무 밑에 닿았는지, 이 게임은 말하지 않는다.\n\n돌담만 남았다.',
+ rev:`<h2>이 마을은 지어낸 마을입니다.<br>그러나 이런 마을은 실제로 있었습니다.</h2>1948년 가을부터 이듬해 봄까지, 제주 4·3의 한가운데에서 한라산 중산간 마을 대부분이 불탔습니다. 해안에서 5km 넘게 들어간 곳을 다니면 안 된다는 포고가 나온 뒤의 일입니다. 정부 진상조사보고서는 4·3으로 숨진 사람을 2만 5천에서 3만 명으로 추정합니다.
+
+다시 세워지지 못한 마을을 제주에서는 '잃어버린 마을'이라 부릅니다. 지금도 그 터에는 돌담과 대숲, 그리고 작은 표석이 남아 있습니다.`,
+ words:{sn:['수눌음','이웃끼리 차례로 품을 주고받는 제주의 관행. 육지의 품앗이.'],sc:['삼춘','남녀 가리지 않고 동네 어른을 부르는 말.'],mh:['물허벅','물을 길어 등에 지고 나르는 항아리.'],ol:['올레','큰길에서 집 마당까지 이어지는 좁은 돌담길.'],tw:['테우리','소나 말을 돌보는 목동.'],sa:['성안','제주 읍내를 이르던 말.']}},
+oki:{key:'oki',year:'1944년 가을',me:{c:'#5a6a8a',b:'#3a3f4a'},
+ intro:"1944년 가을, 오키나와 섬 남쪽의 작은 마을.\n당신은 열네 살입니다.\n\n사탕수수가 키를 넘겼고, 닷새 뒤 태풍이 온다고 합니다.\n우리 집 지붕은 낡았습니다. 혼자서는 고칠 수 없습니다.\n\n이 마을에서는 돌아가며 서로의 일을 거듭니다.\n섬말로 유이마루라고 합니다.",
+ days:["첫날.\n하루에 할 수 있는 일은 세 가지.\n이웃 일을 거들면 양식을 나눠 먹게 되고, 우리 밭을 매면 양식이 늘어난다.\n일을 거들 때마다 이웃은 이야기를 하나씩 들려준다.",
+  "둘째 날.\n마사오가 목에 나무판을 걸고 학교에서 돌아왔다.\n방언찰(方言札). 섬말을 쓴 아이가 거는 표다.\n섬말 쓰는 다른 아이를 찾아야 벗을 수 있다.",
+  "셋째 날.\n마을 학교에 군인들이 들어왔다. 교실이 숙소가 되었다.\n어른들은 낮마다 비행장과 진지를 닦으러 불려 간다.",
+  "넷째 날. 시월 열흘.\n아침부터 나하 쪽 하늘이 검다.\n큰 공습이 있었다고 한다. 어른들이 수평선을 오래 본다.\n내일이면 태풍이 온다."],
+ amb:[null,['g','…밖에서는 섬말 쓰지 마라.'],['d','…낮엔 비행장, 밤엔 밭이다.'],['m','…나하에 친정이 있는데.']],
+ nb:[
+ {id:'g',name:'우시 오바',k:'elder',c:'#5a5a8a',b:'#3f3f66',task:'사탕수수 베기',st:[
+  {t:'유이마루라는 말',w:'yu',s:'"유이마루는 맺어서 돈다는 말이다. 오늘은 내 밭, 내일은 네 밭. 그렇게 한 바퀴 돌면 마을이 다 산다."'},
+  {t:'한번 만나면 형제',w:'ic',s:'"이차리바 초데. 한번 만나면 다 형제라는 말이지. 그런데 요즘은 섬말을 쓰면 수상한 사람 취급을 하는구나."'},
+  {t:'목숨이야말로 보물',w:'nu',s:'"누치두 타카라. 목숨이야말로 보물이다. 누가 무슨 말을 하더라도 이것만은 잊지 마라."'}]},
+ {id:'d',name:'세이토쿠 아저씨',k:'man',c:'#4a7a72',b:'#3a4a44',task:'돌담 쌓기',st:[
+  {t:'집을 지키는 나무',w:'fu',s:'"태풍 섬에서는 돌담과 후쿠기 나무가 집을 지킨다. 담은 혼자 못 쌓는다. 돌 하나에 손 하나씩이지."'},
+  {t:'낮에는 비행장',s:'"낮에는 비행장 닦는 데 불려 간다. 밭일은 밤에 한다. 군대가 온 뒤로 양식 걷어 가는 것도 늘었어."'},
+  {t:'사이판의 형',s:'"형님은 사이판으로 돈 벌러 갔었다. 여름에 그 섬이 떨어졌다는 말만 들었다. 편지는 없다."'}]},
+ {id:'m',name:'가나 이모',k:'woman',c:'#b0566a',b:'#6a3a48',task:'우물물 길어 주기',st:[
+  {t:'고맙다는 섬말',w:'ni',s:'"니훼데비루. 고맙다는 섬말이야. 학교에서는 못 쓰지만 우물가에서는 써도 돼."'},
+  {t:'배를 탄 큰딸',s:'"큰딸은 팔월에 소개선을 타고 본토로 떠났어. 도착했다는 편지가 아직 안 와. 물어봐도 아무도 말을 안 해 줘."'},
+  {t:'가마에서 만나자',w:'ga',s:'"뒷산 가마에 양식을 조금 옮겨 뒀어. 가마는 동굴이야. 무슨 일이 나면… 거기서 만나자."'}]},
+ {id:'b',name:'마사오',k:'boy',c:'#c8c0a8',b:'#3a3f4a',task:'염소 먹이기',st:[
+  {t:'염소는 히자',w:'hi',s:'"염소는 섬말로 히자야. …아, 방금 건 못 들은 걸로 해 줘."'},
+  {t:'넘기지 않겠다',s:'"방언찰 걸었어. 섬말 쓴 애를 찾아서 넘겨야 벗을 수 있대. 난 아무한테도 안 넘길 거야."'},
+  {t:'염소를 키우고 싶은데',s:'"선생님이 그러는데 우리도 곧 나라를 위해 일하게 된대. 형들은 벌써 훈련을 받아. 나는 그냥 염소 키우고 싶은데."'}]}],
+ stormOk:'여러 손이 밧줄을 당긴다. 붉은 기와가 덜컹거리지만, 날아가지는 않는다.',stormNo:'혼자서는 밧줄 하나밖에 당기지 못했다. 기와가 바람에 뜯겨 나간다.',
+ ok:'태풍이 지나갔다.\n밤늦게 모두 한방에 모여 산신(三線) 소리에 맞춰 노래를 부른다.\n마사오가 방언찰을 벗어 두고 섬말로 웃는다.',fail:'밤새 빗물이 샜다.\n새벽에 우시 오바가 문을 두드린다.\n"괜찮니. 날 밝으면 같이 고치자."',
+ after:'이듬해 봄, 바다가 군함으로 메워졌다.\n\n마을 사람들은 가마로 들어갔다.\n누가 그 가마에서 걸어 나왔는지, 이 게임은 말하지 않는다.\n\n지붕들은 다시 올라가지 못했다.',
+ rev:`<h2>이 마을은 지어낸 마을입니다.<br>그러나 이런 마을은 실제로 있었습니다.</h2>1944년 10월 10일의 대공습으로 나하 시가지 대부분이 불탔습니다. 이듬해 봄 미군이 상륙했고, 주민을 휘말리게 한 지상전이 석 달 가까이 이어졌습니다. 20만 명이 넘는 사람이 숨졌고, 오키나와 주민 넷 가운데 한 사람이 목숨을 잃었다고 전해집니다. 많은 주민이 '가마'라 불리는 동굴에서 그 시간을 보냈습니다.
+
+오키나와는 6월 23일을 '위령의 날'로 지킵니다. 가마 입구에는 지금도 종이학이 걸립니다.`,
+ words:{yu:['유이마루 ゆいまーる','차례로 돌아가며 일을 거드는 오키나와의 관행.'],ic:['이차리바 초데','한번 만나면 모두 형제.'],nu:['누치두 타카라 命どぅ宝','목숨이야말로 보물.'],fu:['후쿠기','집 둘레에 심어 바람을 막는 나무.'],ni:['니훼데비루','고맙습니다.'],ga:['가마 ガマ','자연 동굴.'],hi:['히자','염소.']}}
+};
+const QS=['닷새 동안 누구의 일을 거들지 어떻게 골랐나요? 듣지 못한 이야기는 누구의 것이었나요?','어른들은 왜 아이들 앞에서 말을 줄였을까요?','지금 내 곁에서 품을 주고받는 사람은 누구인가요?'];
+
+/* ───────── 상태 ───────── */
+let SC=SCS.jeju,NB,S,keys={},tgt=null,parts=[],rain=[],t=0,busy=null,mode='title',tm=0,wind=0,deco=[],clouds=[],dq=null,sold=-120;
+function setup(k){SC=SCS[k];NB=SC.nb;NB.forEach(n=>{const p=POS[n.id];n.x=p[0];n.y=p[1];n.fx=p[2];n.fy=p[3]});
+ S={day:0,ap:3,food:2,bond:{},heard:[],words:[],px:HOME.x,py:HOME.y+16,dir:1,walk:0,came:[]};NB.forEach(n=>S.bond[n.id]=0);
+ const r=rng(k==='jeju'?7:19);deco=[];for(let i=0;i<70;i++){const dx=20+r()*600,dy=104+r()*236;if(dy>214&&dy<250)continue;if(dx>300&&dx<340&&dy>240)continue;deco.push({x:dx,y:dy,s:r(),v:r()})}
+ clouds=[];for(let i=0;i<5;i++)clouds.push({x:r()*W,y:14+r()*46,w:40+r()*50});parts=[];rain=[];busy=null;tgt=null;wind=0}
+function title(){setup('jeju');mode='title';cap();
+ card(`<h2>품</h2>세 섬 시리즈 · 한 편에 7분쯤
+
+어느 섬마을에서 보내는 닷새.
+이웃의 일을 거들고, 이야기를 듣고, 큰 바람을 함께 넘깁니다.
+<button class="btn" onclick="start('jeju')">🌾 제주 편</button><button class="btn alt" onclick="start('oki')">🌺 오키나와 편</button><button class="btn" disabled>대만 편 (준비 중)</button><div class="note">경희대학교 글로벌류큐·오키나와연구소 · 교육용 웹게임 데모</div>`)}
+function start(k){closeCard();setup(k);mode='play';card(SC.intro,'마을로',()=>dayStart())}
+function card(html,btn,cb,dark){const b=$('box');b.className='box'+(dark?' dark':'');b.innerHTML=html+(btn?`<br><button class="btn" id="ob">${btn}</button>`:'');b.scrollTop=0;$('ov').classList.remove('hide');if(btn)$('ob').onclick=()=>{closeCard();cb&&cb()}}
+function closeCard(){$('ov').classList.add('hide')}
+const open=()=>!$('ov').classList.contains('hide')||dq;
+function cap(s){const c=$('cap');if(s){c.textContent=s;c.classList.remove('hide')}else c.classList.add('hide')}
+function toast(s){const e=$('toast');e.textContent=s;e.style.opacity=1;clearTimeout(toast.h);toast.h=setTimeout(()=>e.style.opacity=0,2600)}
+function say(who,text,cb){dq={cb};$('dlg').innerHTML=`<span class="go">눌러서 계속 ▸</span><span class="who">${who}</span><br>${text}`;$('dlg').classList.remove('hide')}
+$('dlg').onclick=()=>{if(!dq)return;const c=dq.cb;dq=null;$('dlg').classList.add('hide');c&&c()};
+function dayStart(){S.ap=3;S.px=HOME.x;S.py=HOME.y+16;tgt=null;card(`<h2 style="font-size:1rem">${SC.year}</h2>`+SC.days[S.day],'하루 시작')}
+function hud(){const play=mode==='play';$('hud').innerHTML=(play?`<span>📅 <b>${S.day+1}</b>/5일</span><span>✋ <b>${'●'.repeat(S.ap)}${'○'.repeat(3-S.ap)}</b></span><span>🍚 <b>${S.food}</b></span><span>👂 이야기 <b>${S.heard.length}</b></span>`:'<span>품 — 섬마을의 닷새</span>')+(mode!=='title'?`<button id="nb" onclick="book()">📖 섬말 수첩 ${S.words.length}</button>`:'')}
+function book(){if(open())return;const ws=S.words.map(k=>`<div class="word"><b>${SC.words[k][0]}</b><span>${SC.words[k][1]}</span></div>`).join('');
+ card(`<h2>섬말 수첩</h2>${ws||'아직 적은 말이 없다. 이웃 일을 거들면 섬말을 하나씩 배운다.'}`,'닫기')}
+
+/* ───────── 입력 ───────── */
+addEventListener('keydown',e=>{keys[e.key]=1;if(e.key===' '||e.key==='Enter'){e.preventDefault();if(dq)$('dlg').onclick();else act()}});
+addEventListener('keyup',e=>keys[e.key]=0);
+const tap=e=>{const p=e.touches?e.touches[0]:e;e.cancelable&&e.preventDefault();const r=cv.getBoundingClientRect();tgt={x:(p.clientX-r.left)/r.width*W,y:(p.clientY-r.top)/r.height*H};
+ const pts=[...NB.map(n=>[n.x,n.y-14,n.id]),[HOME.x,HOME.y-10,'home'],[FIELD.x,FIELD.y,'field']];const h=pts.find(([a,b])=>Math.hypot(a-tgt.x,b-tgt.y)<38);tgt.auto=h?h[2]:null;
+ if(h){const q=h[2]==='home'?[HOME.x,HOME.y+14]:h[2]==='field'?[FIELD.x,FIELD.y]:[h[0]+14,h[1]+20];tgt.x=q[0];tgt.y=q[1]}};
+if(window.PointerEvent)cv.addEventListener('pointerdown',tap);else cv.addEventListener('touchstart',tap,{passive:false});
+$('act').onclick=()=>act();
+function near(){if(mode!=='play'||busy||open())return null;
+ for(const n of NB)if(Math.hypot(n.x-S.px,n.y-S.py)<40)return{type:'nb',n,id:n.id};
+ if(Math.hypot(FIELD.x-S.px,FIELD.y-S.py)<42)return{type:'field',id:'field'};
+ if(Math.hypot(HOME.x-S.px,HOME.y+14-S.py)<34)return{type:'home',id:'home'};return null}
+function label(a){if(!a)return'';if(a.type==='nb')return S.ap<1?'해가 졌다':S.food<1?'나눠 먹을 양식이 없다':`${a.n.name} · ${a.n.task}`;if(a.type==='field')return S.ap<1?'해가 졌다':'우리 밭 매기 (양식 +3)';return S.ap>0?`하루 마치기 (일 ${S.ap} 남음)`:'집에 들어가 하루 마치기'}
+function act(){const a=near();if(!a)return;if(a.type==='home'){nextDay();return}if(S.ap<1)return;
+ if(a.type==='nb'){if(S.food<1)return;S.ap--;S.food--;busy={n:a.n,t:0}}else{S.ap--;busy={t:0}}}
+function finish(){const b=busy;busy=null;
+ if(b.n){const n=b.n,i=S.bond[n.id];for(let k=0;k<16;k++)parts.push({x:n.fx,y:n.fy-16,vx:(Math.random()-.5)*2.4,vy:-Math.random()*2-1,l:50,c:'#ffd27a'});
+  if(i<3){const st=n.st[i];S.bond[n.id]++;S.heard.push(n.id+i);say(n.name,st.s,()=>{if(st.w&&!S.words.includes(st.w)){S.words.push(st.w);toast(`📖 섬말 수첩에 ‘${SC.words[st.w][0].split(' ')[0]}’을(를) 적었다`)}dusk()})}
+  else say(n.name,'"오늘도 고맙다. 바람 오는 날 꼭 가마."',dusk)}
+ else{S.food+=3;say('나','혼자 밭을 맸다. 손바닥이 얼얼하다. 그래도 며칠 먹을 양식이 생겼다.',dusk)}}
+function dusk(){if(S.ap<1)cap('해가 졌다. 집으로 돌아가자.')}
+function nextDay(){cap();S.day++;S.food=Math.max(0,S.food-1);if(S.day===4){mode='storm';tm=0;S.came=NB.filter(n=>S.bond[n.id]>0);S.px=HOME.x+8;S.py=HOME.y+20;
+  card(`다섯째 날.\n하늘이 낮게 내려앉았다.\n바람이 온다.`,'지붕으로')}else dayStart()}
+
+/* ───────── 그리기 도구 ───────── */
+const el=(a,b,rx,ry)=>{x.beginPath();x.ellipse(a,b,rx,ry,0,0,6.3);x.fill()};
+const rr=(a,b,w,h,r)=>{x.beginPath();x.roundRect(a,b,w,h,r);x.fill()};
+function mix(a,b,p){const A=parseInt(a.slice(1),16),B=parseInt(b.slice(1),16),f=(s)=>(((A>>s)&255)+(((B>>s)&255)-((A>>s)&255))*p)|0;return`rgb(${f(16)},${f(8)},${f(0)})`}
+const J=()=>SC.key==='jeju';
+function person(px,py,o){const g=o.k==='sol';x.save();x.translate(px,py);x.scale(o.dir||1,1);const sw=Math.sin(o.ph||0);
+ x.fillStyle='#0003';el(0,13,9,3);
+ x.fillStyle=g?'#33382e':o.b;x.fillRect(-5,3,4,10+sw);x.fillRect(1,3,4,10-sw);
+ x.fillStyle=g?'#4c5342':o.c;rr(-7,-9,14,14,3);
+ if(o.k==='woman'||o.k==='elder'){x.fillStyle=o.b;x.beginPath();x.moveTo(-7,1);x.lineTo(7,1);x.lineTo(8,10);x.lineTo(-8,10);x.fill()}
+ if(o.baby){x.fillStyle='#e8dcc8';el(-8,-6,5,6);x.fillStyle='#f0d2b0';el(-9,-10,3.2,3.2)}
+ x.strokeStyle=g?'#4c5342':o.c;x.lineWidth=3;x.lineCap='round';const lift=o.work?Math.abs(Math.sin(o.ph*.8))*9:0;
+ x.beginPath();x.moveTo(5,-6);x.lineTo(9+sw,3-lift);x.stroke();
+ if(o.work){x.strokeStyle='#5a4a38';x.lineWidth=1.6;x.beginPath();x.moveTo(9+sw,3-lift);x.lineTo(15+sw,-4-lift);x.stroke()}
+ if(g){x.strokeStyle='#22241e';x.lineWidth=1.6;x.beginPath();x.moveTo(-4,4);x.lineTo(-7,-20);x.stroke()}
+ if(o.board){x.fillStyle='#b08a50';x.fillRect(-4,-5,9,6);x.strokeStyle='#3a2a1a';x.lineWidth=.6;x.strokeRect(-4,-5,9,6)}
+ x.fillStyle=g?'#b0a590':'#f0d2b0';el(0,-15,6.5,6.5);
+ if(g){x.fillStyle='#3d4238';x.beginPath();x.arc(0,-16,7.2,Math.PI,0);x.fill();x.fillRect(-8,-17,16,2)}
+ else if(o.k==='elder'){x.fillStyle='#d8d4cc';x.beginPath();x.arc(0,-16,6.8,Math.PI*.95,Math.PI*.05);x.fill();x.fillStyle='#f4efe4';x.beginPath();x.arc(0,-17.5,6.2,Math.PI,0);x.fill()}
+ else if(o.k==='man'){x.fillStyle='#1e1a17';x.beginPath();x.arc(0,-16,6.8,Math.PI,0);x.fill();x.fillStyle='#d9c28a';el(0,-19,10,2.6);x.beginPath();x.arc(0,-20,5,Math.PI,0);x.fill()}
+ else if(o.k==='woman'){x.fillStyle='#2a1e18';x.beginPath();x.arc(0,-16,6.9,Math.PI*.9,Math.PI*.1);x.fill();el(-5.5,-17,3,3)}
+ else{x.fillStyle='#1e1a17';x.beginPath();x.arc(0,-16.5,6.8,Math.PI,0);x.fill();x.fillRect(-6.8,-17,13.6,2)}
+ if(!g){x.fillStyle='#2b2620';x.fillRect(2.4,-15.5,1.8,2)}
+ x.restore()}
+function house(hx,hy,st){/* st: 0 온전 1 폐허 2 터만 */const j=J();
+ if(st===2){x.fillStyle=j?'#3f3c3a':'#a8a090';for(let i=-26;i<=26;i+=9)el(hx+i,hy-2,5,3.4);x.fillStyle='#6f9a58';for(let i=-22;i<=22;i+=7){x.fillRect(hx+i,hy-9-(i*i%5),1.5,8)}return}
+ if(st===1){x.fillStyle=j?'#2e2b29':'#7a7468';x.beginPath();x.moveTo(hx-28,hy);x.lineTo(hx-28,hy-14);x.lineTo(hx-20,hy-9);x.lineTo(hx-12,hy-16);x.lineTo(hx-2,hy-7);x.lineTo(hx+9,hy-12);x.lineTo(hx+18,hy-6);x.lineTo(hx+28,hy-13);x.lineTo(hx+28,hy);x.fill();
+  x.strokeStyle='#1a1817';x.lineWidth=2.5;x.beginPath();x.moveTo(hx-14,hy-10);x.lineTo(hx-18,hy-30);x.moveTo(hx+12,hy-8);x.lineTo(hx+16,hy-24);x.stroke();return}
+ const lit=S.ap<1&&mode==='play';
+ if(j){x.fillStyle='#55514e';x.fillRect(hx-28,hy-22,56,22);x.fillStyle='#6d6965';for(let i=0;i<14;i++)el(hx-24+(i*17)%50,hy-18+(i*7)%16,4,2.6);
+  x.fillStyle='#3a2e22';x.fillRect(hx-5,hy-16,10,16);x.fillStyle=lit?'#ffd27a':'#2a2622';x.fillRect(hx+11,hy-15,8,7);
+  x.beginPath();x.moveTo(hx-35,hy-19);x.quadraticCurveTo(hx-30,hy-50,hx,hy-52);x.quadraticCurveTo(hx+30,hy-50,hx+35,hy-19);x.closePath();
+  const g=x.createLinearGradient(0,hy-52,0,hy-19);g.addColorStop(0,'#dcbc6c');g.addColorStop(1,'#a8873f');x.fillStyle=g;x.fill();
+  x.save();x.clip();x.strokeStyle='#6b573088';x.lineWidth=1;for(let i=-70;i<70;i+=9){x.beginPath();x.moveTo(hx+i,hy-52);x.lineTo(hx+i+34,hy-18);x.moveTo(hx+i+34,hy-52);x.lineTo(hx+i,hy-18);x.stroke()}x.restore();
+  x.fillStyle='#4a4644';x.fillRect(hx-44,hy-12,4,12);x.fillRect(hx-56,hy-12,4,12);x.strokeStyle='#8a6a48';x.lineWidth=1.6;for(let i=0;i<3;i++){x.beginPath();x.moveTo(hx-56,hy-10+i*3.5);x.lineTo(hx-40,hy-10+i*3.5);x.stroke()}}
+ else{x.fillStyle='#7d6042';x.fillRect(hx-27,hy-20,54,20);x.fillStyle=lit?'#e8b860':'#3a2c20';x.fillRect(hx-18,hy-16,36,16);x.fillStyle='#7d6042';x.fillRect(hx-1.5,hy-16,3,16);
+  x.fillStyle='#c0503a';x.beginPath();x.moveTo(hx-38,hy-17);x.lineTo(hx-22,hy-45);x.lineTo(hx+22,hy-45);x.lineTo(hx+38,hy-17);x.closePath();x.fill();
+  x.save();x.clip();x.strokeStyle='#f0e2d088';x.lineWidth=1.3;for(let i=-36;i<=36;i+=6){x.beginPath();x.moveTo(hx+i*.62,hy-45);x.lineTo(hx+i*1.05,hy-17);x.stroke()}x.restore();
+  x.strokeStyle='#f0e6d8';x.lineWidth=2.4;x.beginPath();x.moveTo(hx-22,hy-45);x.lineTo(hx+22,hy-45);x.stroke();
+  x.fillStyle='#a8683c';el(hx,hy-49,4.5,3.5);el(hx+3,hy-52,2.6,2.4);
+  x.fillStyle='#b8b0a0';for(let i=-42;i<=-30;i+=6)el(hx+i,hy-3,4,3.5)}}
+function tree(tx,ty,bare){const s=Math.sin(t*.03)*1.5+wind*10*Math.sin(t*.12);x.fillStyle='#0002';el(tx,ty+2,26,6);
+ x.strokeStyle='#5a4432';x.lineWidth=8;x.lineCap='round';x.beginPath();x.moveTo(tx,ty);x.quadraticCurveTo(tx-3,ty-22,tx+s*.3,ty-34);x.stroke();
+ x.lineWidth=4;x.beginPath();x.moveTo(tx,ty-24);x.lineTo(tx-16+s*.5,ty-44);x.moveTo(tx,ty-26);x.lineTo(tx+17+s*.5,ty-46);x.stroke();
+ if(bare){x.lineWidth=1.6;[[-16,-44,-26,-58],[-16,-44,-10,-62],[17,-46,28,-60],[17,-46,10,-64],[0,-34,2,-66]].forEach(([a,b,c,d])=>{x.beginPath();x.moveTo(tx+a,ty+b);x.lineTo(tx+c+s,ty+d);x.stroke()});return}
+ const c=J()?['#4a7a42','#5c8c4c','#6f9c58']:['#2f6a4a','#3c7c54','#4f8c5e'];
+ [[-20,-48,17,0],[18,-50,17,0],[0,-62,20,1],[-8,-46,15,1],[10,-44,14,2],[0,-56,13,2]].forEach(([a,b,r,k])=>{x.fillStyle=c[k];el(tx+a+s*(1+k*.3),ty+b,r,r*.85)})}
+function animal(ax,ay){x.fillStyle='#0003';el(ax,ay+9,12,3);if(J()){x.fillStyle='#4a3628';rr(ax-12,ay-6,22,13,5);el(ax+12,ay-6,5.5,5);x.fillRect(ax-10,ay+5,3,6);x.fillRect(ax+5,ay+5,3,6);x.fillStyle='#e8dcc8';x.fillRect(ax+10,ay-12,1.5,4);x.fillRect(ax+14,ay-12,1.5,4)}
+ else{x.fillStyle='#f0ece2';rr(ax-9,ay-3,17,10,4);el(ax+9,ay-4,4.2,4);x.fillRect(ax-7,ay+5,2.4,6);x.fillRect(ax+4,ay+5,2.4,6);x.fillStyle='#8a7a68';x.fillRect(ax+8,ay-10,1.2,4);x.fillRect(ax+10.5,ay-10,1.2,4);x.fillRect(ax+11,ay-1,1,4)}}
+function bubble(px,py,text){x.font='12px "Noto Sans KR"';const w=Math.min(250,x.measureText(text).width+16),bx=Math.max(4,Math.min(W-w-4,px-w/2)),by=py-66;
+ x.fillStyle='#fffaf0ee';rr(bx,by,w,24,8);x.fillStyle='#2b2620';x.textAlign='left';x.fillText(text,bx+8,by+16,w-16)}
+
+/* ───────── 배경 ───────── */
+function back(){const m=mode,j=J(),p=m==='play'?(3-S.ap)/3:0;let a,b;
+ if(m==='storm'){a='#333b46';b='#5a646e'}else if(m==='after'){a=j?'#8f999f':'#6b6460';b=j?'#cdd3d6':'#b89a80'}else if(m==='now'){a='#6fb6dc';b='#d6eef0'}
+ else if(p>=1){a='#141a3a';b='#3a3a5e'}else{a=mix('#7fc0dc','#d98a5e',p);b=mix('#d8ecdc','#f6cf9c',p)}
+ const g=x.createLinearGradient(0,0,0,100);g.addColorStop(0,a);g.addColorStop(1,b);x.fillStyle=g;x.fillRect(0,0,W,100);
+ if(m==='play'&&p>=1){x.fillStyle='#fff';for(let i=0;i<40;i++){x.globalAlpha=.4+.6*Math.abs(Math.sin(t*.02+i));x.fillRect((i*97)%W,(i*53)%80,1.3,1.3)}x.globalAlpha=1;x.fillStyle='#f4eec8';el(96,34,11,11)}
+ else if(m==='play'||m==='now'||m==='title'){x.fillStyle=p>.5?'#ffb070':'#fff6d0';el(540-p*90,26+p*46,13,13)}
+ x.fillStyle=m==='storm'?'#77808a':p>=1?'#4a4f70':'#ffffffcc';clouds.forEach(c=>{c.x=(c.x+.08+wind*2)%(W+120);const cx=c.x-60;el(cx,c.y,c.w*.5,9);el(cx+c.w*.25,c.y-6,c.w*.28,9);el(cx-c.w*.22,c.y-3,c.w*.24,7)});
+ if(!j&&m==='play'&&S.day===3){for(let i=0;i<9;i++){x.fillStyle=`rgba(25,22,22,${.55-i*.05})`;el(66+i*7+Math.sin(t*.02+i)*4,84-i*9,12+i*3.4,10+i*1.6)}}
+ if(!j&&m==='after'){for(let k=0;k<3;k++)for(let i=0;i<7;i++){x.fillStyle=`rgba(30,26,24,${.5-i*.06})`;el(110+k*200+i*6,88-i*10,11+i*3,9+i*1.5)}}
+ // 산
+ const sn=m==='after'&&j;
+ if(j){x.fillStyle=sn?'#c4ccd0':p>=1?'#2a3350':'#93aaa4';x.beginPath();x.moveTo(40,100);x.quadraticCurveTo(250,60,330,30);x.quadraticCurveTo(350,26,372,31);x.quadraticCurveTo(470,62,640,92);x.lineTo(640,100);x.fill()}
+ x.fillStyle=sn?'#aab4b6':p>=1?'#26402e':j?'#6d8f56':'#5a8a58';el(470,104,150,j?44:30);x.fillStyle=sn?'#9aa6a8':p>=1?'#1f3628':j?'#5d7f4a':'#4c7c4e';el(150,106,170,j?34:26);
+ if(!j&&(m==='now'||m==='play'||m==='after'||m==='storm')){x.fillStyle='#1a1614';el(566,92,13,9);if(m==='now'){const cs=['#e0564a','#f0c040','#5aa0d8','#70b860','#e88ab0'];for(let i=0;i<14;i++){x.fillStyle=cs[i%5];x.fillRect(555+i*1.6,84+Math.sin(i*.9)*2+i*.9,2,5)}}}
+ if(j&&m==='play'&&S.day===2&&S.ap<=1)for(let i=0;i<4;i++){x.fillStyle=`rgba(255,170,80,${.5+.5*Math.sin(t*.1+i*2)})`;el(420+i*30,74+(i%2)*8,2.2,2.2)}
+ // 땅
+ const land=sn?'#e4e8ea':m==='after'?'#9a9278':m==='storm'?(j?'#8f9a68':'#7f9a60'):j?'#b3b877':'#9cc070';x.fillStyle=land;x.fillRect(0,98,W,254);
+ x.fillStyle=sn?'#d4d9dc':m==='now'?(j?'#a9b877':'#93bc6c'):'#cdbb8c';x.fillRect(0,226,W,18);x.fillRect(311,244,18,106);
+ // 바다
+ const sg=x.createLinearGradient(0,350,0,H);sg.addColorStop(0,m==='storm'?'#2d4048':j?'#3a6a78':'#2f9aa8');sg.addColorStop(1,j?'#1f3e48':'#1c5a78');x.fillStyle=sg;x.fillRect(0,350,W,50);
+ x.fillStyle=j?'#2a2826':'#e8dcb8';for(let i=0;i<W;i+=14)el(i+7,351+Math.sin(i)*1.5,9,3.5);
+ x.strokeStyle='#ffffff66';x.lineWidth=1.2;for(let r=0;r<3;r++){x.beginPath();for(let i=0;i<=W;i+=8)x.lineTo(i,366+r*11+Math.sin(i*.05+t*(.04+wind*.08)+r)*(2+wind*4));x.stroke()}
+ if(!j&&m==='after'){x.fillStyle='#2a2e30';for(let i=0;i<9;i++){const sx=30+i*72,sy=372+(i%3)*8;x.fillRect(sx,sy,34,5);x.fillRect(sx+10,sy-5,12,5);x.fillRect(sx+15,sy-10,2,5)}}
+ // 풀·억새·사탕수수
+ if(m!=='after'||!sn)deco.forEach(d=>{const s=Math.sin(t*.04+d.x)*1.5+wind*7;if(j){x.strokeStyle='#8a8f58';x.lineWidth=1;x.beginPath();x.moveTo(d.x,d.y);x.lineTo(d.x+s,d.y-9);x.stroke();if(d.s>.45){x.strokeStyle='#f2efe2';x.lineWidth=2;x.beginPath();x.moveTo(d.x+s,d.y-9);x.lineTo(d.x+s*1.6+2,d.y-14);x.stroke()}}
+  else{if(d.s>.75){x.fillStyle='#3c8a4c';el(d.x,d.y-3,5,4);x.fillStyle='#e0403a';el(d.x-2+s*.2,d.y-5,1.8,1.8);el(d.x+3,d.y-2,1.6,1.6)}else{x.strokeStyle='#5c9a4a';x.lineWidth=1.2;x.beginPath();x.moveTo(d.x,d.y);x.lineTo(d.x+s,d.y-7);x.stroke()}}});
+ // 돌담
+ x.fillStyle=j?'#3f3c3a':'#b8b0a0';[[16,222,262],[362,222,262],[16,248,286],[338,248,286]].forEach(([a,b,c])=>{for(let i=a;i<a+c;i+=9)el(i+4.5,b+(i%18?0:1),5,4)});
+ if(j&&(m==='play')&&S.day>=2){x.fillStyle='#f4efe0';x.fillRect(268,208,9,11);x.fillStyle='#555';for(let i=0;i<4;i++)x.fillRect(269.5,210+i*2.2,6,.7)}
+ if(m==='after'||m==='now')return;
+ // 일터
+ const g0=NB[0],d0=NB[1],m0=NB[2];
+ if(j){x.fillStyle='#b89a50';x.fillRect(g0.fx-26,g0.fy-12,52,24);x.strokeStyle='#e0c060';x.lineWidth=2;for(let i=-22;i<=22;i+=6){const s=Math.sin(t*.05+i)*1+wind*5;x.beginPath();x.moveTo(g0.fx+i,g0.fy+10);x.lineTo(g0.fx+i+s,g0.fy-8);x.stroke()}}
+ else{x.fillStyle='#6a8a48';x.fillRect(g0.fx-26,g0.fy-12,52,24);x.strokeStyle='#8fc060';x.lineWidth=2.2;for(let i=-22;i<=22;i+=5){const s=Math.sin(t*.05+i)*1.4+wind*6;x.beginPath();x.moveTo(g0.fx+i,g0.fy+10);x.lineTo(g0.fx+i+s,g0.fy-20);x.stroke()}}
+ if(j){x.fillStyle='#c8a850';for(let i=0;i<4;i++)el(d0.fx-10+i*7,d0.fy+4-i%2*5,9,4)}else{x.fillStyle='#b8b0a0';for(let i=0;i<7;i++)el(d0.fx-12+(i%4)*8,d0.fy+5-(i>3?7:0),5,4)}
+ x.fillStyle=j?'#4a4644':'#a8a090';el(m0.fx,m0.fy,13,7);x.fillStyle='#2a5a6a';el(m0.fx,m0.fy-1,9,4.4);
+ x.fillStyle='#8a7448';x.fillRect(FIELD.x-40,FIELD.y-17,80,34);x.strokeStyle='#6b5a34';x.lineWidth=1;for(let i=0;i<5;i++){x.beginPath();x.moveTo(FIELD.x-36,FIELD.y-12+i*6);x.lineTo(FIELD.x+36,FIELD.y-12+i*6);x.stroke()}
+ x.fillStyle='#6a9a48';for(let i=0;i<Math.min(18,S.food*3);i++)el(FIELD.x-33+(i%9)*8,FIELD.y-9+(i>8?12:0),2.6,2.6)}
+
+/* ───────── 메인 루프 ───────── */
+function frame(){t++;x.clearRect(0,0,W,H);back();const dr=[],m=mode;
+ const hs=m==='after'?1:m==='now'?2:0;
+ NB.forEach(n=>dr.push([n.y-12,()=>house(n.x,n.y-12,hs)]));dr.push([HOME.y,()=>{house(HOME.x,HOME.y,hs);
+  if(m==='storm'&&tm>90&&S.came.length){x.strokeStyle='#d9c8a0';x.lineWidth=1.2;S.came.forEach(n=>{x.beginPath();x.moveTo(HOME.x,HOME.y-46);x.lineTo(n.cx,n.cy-4);x.stroke()})}}]);
+ dr.push([TREE.y,()=>tree(TREE.x,TREE.y,m==='after'&&J())]);
+ if(!J()&&m!=='after'&&m!=='now')NB.forEach(n=>dr.push([n.y-14,()=>{x.fillStyle='#2f6a4a';el(n.x+42,n.y-34+Math.sin(t*.03)*.5,9,15);x.fillStyle='#5a4432';x.fillRect(n.x+40.5,n.y-20,3,8)}]));
+ if(m==='now'){if(J())dr.push([258,()=>{x.fillStyle='#4a4644';rr(352,236,16,22,3);x.fillStyle='#d8d4cc';for(let i=0;i<4;i++)x.fillRect(355,240+i*4,10,1.2);x.fillStyle='#3c7a4a';for(let i=0;i<9;i++){x.fillRect(120+i*5,132-(i%3)*6,2,34)}}]);
+  else dr.push([258,()=>{x.strokeStyle='#8fc060';x.lineWidth=2.2;for(let k=0;k<4;k++){const n=NB[k];for(let i=-30;i<=30;i+=5){x.beginPath();x.moveTo(n.x+i,n.y+4);x.lineTo(n.x+i+Math.sin(t*.04+i)*1.5,n.y-24);x.stroke()}}}])}
+ // 이동
+ if(m==='play'&&!busy&&!open()){let dx=0,dy=0;if(keys.ArrowLeft||keys.a)dx--;if(keys.ArrowRight||keys.d)dx++;if(keys.ArrowUp||keys.w)dy--;if(keys.ArrowDown||keys.s)dy++;
+  if(dx||dy)tgt=null;else if(tgt){const vx=tgt.x-S.px,vy=tgt.y-S.py,d=Math.hypot(vx,vy);if(d<4)tgt=null;else{dx=vx/d;dy=vy/d}}
+  if(dx||dy){const d=Math.hypot(dx,dy);S.px=Math.max(12,Math.min(W-12,S.px+dx/d*2.3));S.py=Math.max(104,Math.min(346,S.py+dy/d*2.3));S.walk+=.4;if(Math.abs(dx)>.2)S.dir=dx>0?1:-1}}
+ const me=o=>Object.assign({k:'me',c:SC.me.c,b:SC.me.b},o);
+ if(m==='play'||m==='title'){const b0=NB[3];dr.push([b0.fy,()=>animal(b0.fx,b0.fy)]);
+  NB.forEach(n=>{const w=busy&&busy.n===n,px=w?n.fx-14:n.x,py=w?n.fy+6:n.y;dr.push([py,()=>{person(px,py,{k:n.k,c:n.c,b:n.b,baby:n.baby,dir:1,ph:w?t*.3:0,work:w,board:SC.key==='oki'&&n.id==='b'&&S.day>=1&&S.day<4});
+   if(!w&&m==='play'){x.textAlign='center';x.font='600 11px "Noto Sans KR"';x.lineWidth=3;x.strokeStyle='#0008';x.strokeText(n.name,n.x,n.y+27);x.fillStyle='#fff';x.fillText(n.name,n.x,n.y+27);x.fillStyle='#ffd27a';x.font='9px sans-serif';x.fillText('●'.repeat(S.bond[n.id])+'○'.repeat(3-S.bond[n.id]),n.x,n.y+38);x.textAlign='left'}}])});
+  if(m==='play'){if(busy){const n=busy.n,tx=n?n.fx+14:FIELD.x,ty=n?n.fy+6:FIELD.y;S.px+=(tx-S.px)*.1;S.py+=(ty-S.py)*.1;busy.t++;S.walk+=.3;S.dir=n?-1:1;if(busy.t%14===0)parts.push({x:tx-6,y:ty,vx:(Math.random()-.5),vy:-1.2,l:24,c:J()?'#e0c060':'#8fc060'});if(busy.t>=120)finish()}
+   dr.push([S.py,()=>{person(S.px,S.py,me({dir:S.dir,ph:S.walk,work:!!busy}));if(busy){x.fillStyle='#0007';rr(S.px-22,S.py-50,44,6,3);x.fillStyle='#ffd27a';rr(S.px-22,S.py-50,44*busy.t/120,6,3)}}]);
+   if(S.day===3||(SC.key==='oki'&&S.day===2)){sold+=.7;if(sold>W+120)sold=-260;for(let i=0;i<4;i++)dr.push([236,()=>person(sold-i*24,236,{k:'sol',dir:1,ph:t*.25+i})])}}}
+ if(m==='storm'&&!open()){tm++;wind=Math.min(1,tm/120);for(let i=0;i<7;i++)rain.push({x:Math.random()*W+160,y:-10,v:7+Math.random()*4});
+  const ok=S.came.length>=3;S.came.forEach((n,i)=>{const p=Math.min(1,tm/110),ax=HOME.x-66+i*42+(i>1?10:0),ay=HOME.y+26+(i%2)*8;n.cx=n.x+(ax-n.x)*p;n.cy=n.y+(ay-n.y)*p;dr.push([n.cy,()=>person(n.cx,n.cy,{k:n.k,c:n.c,b:n.b,baby:n.baby,dir:n.cx<HOME.x?1:-1,ph:tm*.3,work:p>=1})])});
+  dr.push([S.py,()=>person(S.px,S.py,me({dir:-1,ph:tm*.25,work:true}))]);
+  if(!ok&&tm>130&&tm%5===0)parts.push({x:HOME.x+Math.random()*30-15,y:HOME.y-44,vx:-3-Math.random()*3,vy:-1-Math.random(),l:70,c:J()?'#c8a850':'#c0503a'});
+  if(tm===60)cap(S.came.length?`${S.came.map(n=>n.name).join(', ')}가 밧줄을 들고 왔다.`:'아무도 오지 않았다. 다들 제 지붕 붙들기에도 바빴다.');
+  if(tm===250)cap(ok?SC.stormOk:SC.stormNo);
+  if(tm===470){cap();card(ok?SC.ok:SC.fail,'그 뒤의 이야기',()=>{mode='after';tm=0;wind=0;rain=[]})}}
+ if(m==='after'&&!open()){tm++;if(tm===110)card(SC.after,'세월이 흐른 뒤',()=>{mode='now';tm=0;rain=[]},true)}
+ if(m==='now'&&!open()){tm++;if(tm===30)cap(J()?'오늘, 그 마을 터. 돌담과 팽나무, 그리고 작은 표석.':'오늘, 그 마을 터. 사탕수수밭과 가마 입구의 종이학.');if(tm===260){cap();reveal()}}
+ dr.sort((a,b)=>a[0]-b[0]).forEach(d=>d[1]());
+ // 조명
+ if(m==='play'){const p=(3-S.ap)/3;if(p>=1){x.fillStyle='rgba(14,18,58,.5)';x.fillRect(0,0,W,H);x.globalCompositeOperation='lighter';[...NB.map(n=>[n.x+(J()?15:0),n.y-25]),[HOME.x+(J()?15:0),HOME.y-13]].forEach(([a,b])=>{const g=x.createRadialGradient(a,b,2,a,b,34);g.addColorStop(0,'rgba(255,190,90,.55)');g.addColorStop(1,'rgba(255,190,90,0)');x.fillStyle=g;x.fillRect(a-34,b-34,68,68)});x.globalCompositeOperation='source-over'}
+  else if(p>0){x.fillStyle=`rgba(255,130,50,${.13*p})`;x.fillRect(0,0,W,H)}
+  const am=SC.amb[S.day];if(am&&!busy&&!dq){const n=NB.find(v=>v.id===am[0]);if(Math.hypot(n.x-S.px,n.y-S.py)<120&&Math.hypot(n.x-S.px,n.y-S.py)>40)bubble(n.x,n.y,am[1])}}
+ if(m==='storm'){x.strokeStyle='#cfe0ff99';x.lineWidth=1;rain.forEach(r=>{r.y+=r.v;r.x-=r.v*.7;x.beginPath();x.moveTo(r.x,r.y);x.lineTo(r.x-6,r.y+9);x.stroke()});rain=rain.filter(r=>r.y<H);
+  x.strokeStyle='#ffffff22';x.lineWidth=2;for(let i=0;i<5;i++){const wy=(i*83+t*3)%H,wx=W-((t*9+i*190)%(W+200));x.beginPath();x.moveTo(wx,wy);x.lineTo(wx+90,wy-10);x.stroke()}x.fillStyle='rgba(10,14,24,.28)';x.fillRect(0,0,W,H)}
+ if(m==='after'&&J()){if(t%2===0)rain.push({x:Math.random()*W,y:-5,v:.7+Math.random()});x.fillStyle='#fff';rain.forEach(r=>{r.y+=r.v;r.x+=Math.sin(r.y/20)*.4;x.fillRect(r.x,r.y,2,2)});rain=rain.filter(r=>r.y<H)}
+ if(m==='after'&&!J()){x.fillStyle='rgba(60,30,10,.18)';x.fillRect(0,0,W,H)}
+ parts.forEach(p=>{p.x+=p.vx;p.y+=p.vy;p.vy+=.05;p.l--;x.fillStyle=p.c;x.fillRect(p.x,p.y,3,3)});parts=parts.filter(p=>p.l>0);
+ const q=near();if(tgt&&tgt.auto&&q&&q.id===tgt.auto&&!(q.type!=='home'&&S.ap<1)){tgt=null;act()}
+ const a=near(),ab=$('act');ab.style.display=a?'block':'none';if(a)ab.textContent=label(a);
+ hud();requestAnimationFrame(frame)}
+function reveal(){const li=NB.map(n=>n.st.map((s,i)=>S.heard.includes(n.id+i)?`<li>${n.name} — ${s.t}</li>`:'<li class="no">· · ·</li>').join('')).join('');
+ const ws=S.words.map(k=>SC.words[k][0].split(' ')[0]).join(' · ')||'없음';
+ card(`${SC.rev}<h3>당신이 들은 이야기 ${S.heard.length} / 12</h3><ul>${li}</ul>듣지 못한 이야기는 여기 적히지 않습니다. 실제로도 많은 이야기가 그렇게, 들어 줄 사람을 만나지 못한 채 남았습니다.<h3>당신이 배운 섬말</h3>${ws}
+
+제주의 <b>수눌음</b>, 오키나와의 <b>유이마루</b>, 대만의 <b>방반(放伴)</b>. 섬마다 연결의 말이 있었습니다.<h3>함께 이야기해 봅시다</h3><ul>${QS.map(q=>`<li>${q}</li>`).join('')}</ul><div class="note">※ 데모 버전입니다. 등장인물과 마을은 창작이며, 역사적 배경 서술은 전공 연구진의 검토를 거쳐 보완할 예정입니다. 정식판에서는 실제 구술 음성과 사진 아카이브가 이 자리에 이어집니다.<br>경희대학교 글로벌류큐·오키나와연구소</div><button class="btn alt" onclick="start('${J()?'oki':'jeju'}')">${J()?'🌺 오키나와 편':'🌾 제주 편'} 하기</button>`,'처음으로',title,true)}
+title();frame();
+</script>
+</body>
+</html>
