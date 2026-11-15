@@ -1,5 +1,5 @@
 /* 품 — 오프라인 캐시. 파일을 고치면 VERSION을 올려 주세요. */
-const VERSION='poom-v9';
+const VERSION='poom-v10';
 const FILES=['./','index.html','engine.js','scenarios/jeju.js','scenarios/oki.js','scenarios/tw.js','manifest.webmanifest','icon.svg'];
 self.addEventListener('install',e=>{e.waitUntil(caches.open(VERSION).then(c=>c.addAll(FILES)).then(()=>self.skipWaiting()))});
 self.addEventListener('activate',e=>{e.waitUntil(caches.keys().then(ks=>Promise.all(ks.filter(k=>k!==VERSION).map(k=>caches.delete(k)))).then(()=>self.clients.claim()))});

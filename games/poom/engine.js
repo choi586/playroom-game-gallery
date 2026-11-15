@@ -49,11 +49,13 @@ function closeCard(){$('ov').classList.add('hide')}
 const open=()=>!$('ov').classList.contains('hide')||dq;
 function cap(s){const c=$('cap');if(s){c.textContent=s;c.classList.remove('hide')}else c.classList.add('hide')}
 function toast(s){const e=$('toast');e.textContent=s;e.style.opacity=1;clearTimeout(toast.h);toast.h=setTimeout(()=>e.style.opacity=0,2600)}
-function say(who,text,cb){dq={cb};$('dlg').innerHTML=`<span class="go">눌러서 계속 ▸</span><span class="who">${who}</span><br>${text}`;$('dlg').classList.remove('hide')}
+function face(who){const n=NB.find(v=>v.name===who),o=n?{k:n.k,c:n.c,b:n.b}:who==='나'?{k:'me',c:SC.me.c,b:SC.me.b}:null;if(!o)return'';
+ try{const c=document.createElement('canvas');c.width=c.height=116;const keep=x;x=c.getContext('2d');x.translate(58,104);x.scale(4.6,4.6);person(0,0,Object.assign({dir:1,ph:0},o));x=keep;return`<img alt="" src="${c.toDataURL()}">`}catch(e){return''}}
+function say(who,text,cb){dq={cb};$('dlg').innerHTML=`${face(who)}<div class="tx"><span class="go">계속 ▸</span><span class="who">${who}</span><br>${text}</div>`;$('dlg').classList.remove('hide')}
 $('dlg').onclick=()=>{if(!dq)return;const c=dq.cb;dq=null;$('dlg').classList.add('hide');c&&c()};
 function dayStart(){save();S.ap=3;S.px=HOME.x;S.py=HOME.y+16;tgt=null;card(`<h2 style="font-size:1rem">${SC.year}</h2>`+SC.days[S.day],'하루 시작',()=>{const c=SC.ch[S.day];if(c)card(`<h2 style="font-size:1rem">그날 있었던 일</h2>${c.q}<br><button class="btn" onclick="pickC(0)">${c.a[0]}</button><button class="btn alt" onclick="pickC(1)">${c.a[1]}</button>`)})}
 function pickC(i){closeCard();const c=SC.ch[S.day];S.ch.push([c.t,c.a[i]]);chime(1);say('그날',c.r[i])}
-let hudS='',muted=false;function hud(){const play=mode==='play';const h=(play?`<span>📅 <b>${S.day+1}</b>/5일</span><span>✋ <b>${'●'.repeat(S.ap)}${'○'.repeat(3-S.ap)}</b></span><span>🍚 <b>${S.food}</b></span><span>👂 이야기 <b>${S.heard.length}</b></span>`:'<span>품 — 섬마을의 닷새</span>')+(mode!=='title'?`<button id="nb" onclick="book()">📖 섬말 수첩 ${S.words.length}</button><button id="mu" onclick="muted=!muted">${muted?'🔇':'🔊'}</button>`:'');if(h!==hudS){hudS=h;$('hud').innerHTML=h}}
+let hudS='',muted=false;function hud(){const play=mode==='play';const h=(play?`<span>📅 <b>${S.day+1}</b>/5일</span><span>✋ ${S.day?'':'남은 일 '}<b>${'●'.repeat(S.ap)}${'○'.repeat(3-S.ap)}</b></span><span>🍚 ${S.day?'':'양식 '}<b>${S.food}</b></span><span>👂 ${S.day?'':'들은 '}이야기 <b>${S.heard.length}</b></span>`:'<span>품 — 섬마을의 닷새</span>')+(mode!=='title'?`<button id="nb" onclick="book()">📖 섬말 수첩 ${S.words.length}</button><button id="mu" onclick="muted=!muted">${muted?'🔇':'🔊'}</button>`:'');if(h!==hudS){hudS=h;$('hud').innerHTML=h}}
 let AC,windG;function audio(){if(AC)return;try{AC=new(window.AudioContext||window.webkitAudioContext)();const b=AC.createBuffer(1,AC.sampleRate*2,AC.sampleRate),d=b.getChannelData(0);for(let i=0;i<d.length;i++)d[i]=Math.random()*2-1;const n=AC.createBufferSource();n.buffer=b;n.loop=true;const f=AC.createBiquadFilter();f.type='lowpass';f.frequency.value=420;windG=AC.createGain();windG.gain.value=0;n.connect(f);f.connect(windG);windG.connect(AC.destination);n.start()}catch(e){AC=null}}
 function chime(k){if(!AC||muted)return;try{const sc=[392,440,523,587,659,784],seq=k===2?[2,4,5]:k===1?[1,3]:[0,2];seq.forEach((n,i)=>{const o=AC.createOscillator(),g=AC.createGain(),t0=AC.currentTime+i*.16;o.type='sine';o.frequency.value=sc[n];g.gain.setValueAtTime(0,t0);g.gain.linearRampToValueAtTime(.09,t0+.03);g.gain.exponentialRampToValueAtTime(.0001,t0+.9);o.connect(g);g.connect(AC.destination);o.start(t0);o.stop(t0+1)})}catch(e){}}
 function book(){if(open())return;const ws=S.words.map(k=>`<div class="word"><b>${SC.words[k][0]}</b><span>${SC.words[k][1]}</span></div>`).join('');
@@ -70,17 +72,30 @@ $('act').onclick=()=>act();
 function near(){if(mode!=='play'||busy||open())return null;
  for(const n of NB)if(Math.hypot(n.x-S.px,n.y-S.py)<40)return{type:'nb',n,id:n.id};
  if(Math.hypot(FIELD.x-S.px,FIELD.y-S.py)<42)return{type:'field',id:'field'};
- if(Math.hypot(HOME.x-S.px,HOME.y+14-S.py)<34)return{type:'home',id:'home'};return null}
+ if(S.ap<3&&Math.hypot(HOME.x-S.px,HOME.y+14-S.py)<34)return{type:'home',id:'home'};return null}
 function label(a){if(!a)return'';if(a.type==='nb')return S.ap<1?'해가 졌다':S.food<1?'나눠 먹을 양식이 없다':`${a.n.name} · ${a.n.task}`;if(a.type==='field')return S.ap<1?'해가 졌다':'우리 밭 매기 (양식 +3)';return S.ap>0?`하루 마치기 (일 ${S.ap} 남음)`:'집에 들어가 하루 마치기'}
 function act(){const a=near();if(!a)return;if(a.type==='home'){nextDay();return}if(S.ap<1)return;
  if(a.type==='nb'){if(S.food<1)return;S.ap--;S.food--;busy={n:a.n,t:0}}else{S.ap--;busy={t:0}}}
-function finish(){const b=busy;busy=null;
+/* 화면 속 조작 안내: 첫날, 아직 해 보지 않은 동작만 그림으로 알려 준다 */
+let G={};try{G=JSON.parse(localStorage.getItem('poom-guide')||'{}')}catch(e){}
+function learn(k){if(G[k])return;G[k]=1;try{localStorage.setItem('poom-guide',JSON.stringify(G))}catch(e){}}
+const TOUCH=('ontouchstart' in window)||(window.matchMedia&&matchMedia('(pointer:coarse)').matches);
+function keycap(cx,cy,l,w){w=w||20;x.fillStyle='#0006';rr(cx-w/2,cy-8,w,20,5);x.fillStyle='#fffaf0';rr(cx-w/2,cy-10,w,20,5);x.fillStyle='#2b2620';x.font='600 11px "Noto Sans KR"';x.textAlign='center';x.fillText(l,cx,cy+4);x.textAlign='left'}
+function mark(px,py,l){const b=Math.sin(t*.12)*3;x.font='600 11px "Noto Sans KR"';const w=x.measureText(l).width+16;x.fillStyle='#e07b4f';rr(px-w/2,py-22+b,w,19,9);x.beginPath();x.moveTo(px-5,py-4+b);x.lineTo(px+5,py-4+b);x.lineTo(px,py+3+b);x.fill();x.fillStyle='#fff';x.textAlign='center';x.fillText(l,px,py-8.5+b);x.textAlign='left'}
+function guide(){if(mode!=='play'||S.day>0||open()||busy)return;
+ if(!G.move){x.fillStyle='#000a';rr(W/2-108,330,216,58,14);
+  if(TOUCH){const r=7+Math.abs(Math.sin(t*.08))*7;x.strokeStyle='#ffd27a';x.lineWidth=2;x.beginPath();x.arc(W/2-72,359,r,0,6.3);x.stroke();x.fillStyle='#ffd27a';el(W/2-72,359,5,5);x.fillStyle='#fff';x.font='600 13px "Noto Sans KR"';x.fillText('가고 싶은 곳을 누르기',W/2-44,364)}
+  else{keycap(W/2-66,348,'W');keycap(W/2-88,370,'A');keycap(W/2-66,370,'S');keycap(W/2-44,370,'D');x.fillStyle='#fff';x.font='600 13px "Noto Sans KR"';x.fillText('또는 ← ↑ ↓ →  이동',W/2-18,364)}return}
+ if(S.ap>0&&!G.help){NB.forEach(n=>mark(n.x,n.y-62,TOUCH?'눌러서 거들기':'거들기'));if(!TOUCH&&near()){keycap(W/2,372,'Space',52)}return}
+ if(S.ap>0&&!G.field){mark(FIELD.x,FIELD.y-24,'밭 매기 · 양식 +3');return}
+ if(S.ap<1&&!G.home)mark(HOME.x,HOME.y-60,'집으로 · 하루 마치기')}
+function finish(){const b=busy;busy=null;learn(b.n?'help':'field');
  if(b.n){const n=b.n,i=S.bond[n.id];for(let k=0;k<16;k++)parts.push({x:n.fx,y:n.fy-16,vx:(Math.random()-.5)*2.4,vy:-Math.random()*2-1,l:50,c:'#ffd27a'});
   if(i<3){const st=n.st[i];S.bond[n.id]++;S.heard.push(n.id+i);chime(0);say(n.name,st.s,()=>{if(st.w&&!S.words.includes(st.w)){S.words.push(st.w);chime(2);toast(`📖 섬말 수첩에 ‘${SC.words[st.w][0].split(' ')[0]}’을(를) 적었다`)}dusk()})}
   else say(n.name,'"오늘도 고맙다. 바람 오는 날 꼭 가마."',dusk)}
  else{S.food+=3;say('나','혼자 밭을 맸다. 손바닥이 얼얼하다. 그래도 며칠 먹을 양식이 생겼다.',dusk)}}
 function dusk(){if(S.ap<1)cap('해가 졌다. 집으로 돌아가자.')}
-function nextDay(){cap();S.day++;S.food=Math.max(0,S.food-1);if(S.day===4){mode='storm';tm=0;S.came=NB.filter(n=>S.bond[n.id]>0);S.px=HOME.x+8;S.py=HOME.y+20;
+function nextDay(){learn('home');cap();S.day++;S.food=Math.max(0,S.food-1);if(S.day===4){mode='storm';tm=0;S.came=NB.filter(n=>S.bond[n.id]>0);S.px=HOME.x+8;S.py=HOME.y+20;
   card(`다섯째 날.\n하늘이 낮게 내려앉았다.\n바람이 온다.`,'지붕으로')}else dayStart()}
 
 /* ───────── 그리기 도구 ───────── */
@@ -112,6 +127,7 @@ function house(hx,hy,st){/* st: 0 온전 1 폐허 2 터만 */const j=J();
  if(st===2){x.fillStyle=STN[SC.theme];for(let i=-26;i<=26;i+=9)el(hx+i,hy-2,5,3.4);x.fillStyle='#6f9a58';for(let i=-22;i<=22;i+=7){x.fillRect(hx+i,hy-9-(i*i%5),1.5,8)}return}
  if(st===1){x.fillStyle=j?'#2e2b29':'#7a7468';x.beginPath();x.moveTo(hx-28,hy);x.lineTo(hx-28,hy-14);x.lineTo(hx-20,hy-9);x.lineTo(hx-12,hy-16);x.lineTo(hx-2,hy-7);x.lineTo(hx+9,hy-12);x.lineTo(hx+18,hy-6);x.lineTo(hx+28,hy-13);x.lineTo(hx+28,hy);x.fill();
   x.strokeStyle='#1a1817';x.lineWidth=2.5;x.beginPath();x.moveTo(hx-14,hy-10);x.lineTo(hx-18,hy-30);x.moveTo(hx+12,hy-8);x.lineTo(hx+16,hy-24);x.stroke();return}
+ x.fillStyle='#00000026';el(hx,hy+1,37,6);
  const lit=S.ap<1&&mode==='play';
  if(T()){const ab=st===3;x.fillStyle=ab?'#8a5648':'#a85a44';x.fillRect(hx-28,hy-22,56,22);x.strokeStyle='#8a463688';x.lineWidth=.8;for(let i=1;i<5;i++){x.beginPath();x.moveTo(hx-28,hy-22+i*4.4);x.lineTo(hx+28,hy-22+i*4.4);x.stroke()}
   x.fillStyle=ab?'#0c0a0a':'#4a3626';x.fillRect(hx-6,hy-17,12,17);x.fillStyle='#c8302a';x.fillRect(hx-10.5,hy-16,3,ab?6:13);if(!ab)x.fillRect(hx+7.5,hy-16,3,13);x.fillStyle=lit?'#ffd27a':'#221e1c';x.fillRect(hx+13,hy-15,8,7);
@@ -204,7 +220,7 @@ function frameBody(){x.clearRect(0,0,W,H);back();const dr=[],m=mode;
  // 이동
  if(m==='play'&&!busy&&!open()){let dx=0,dy=0;if(keys.ArrowLeft||keys.a)dx--;if(keys.ArrowRight||keys.d)dx++;if(keys.ArrowUp||keys.w)dy--;if(keys.ArrowDown||keys.s)dy++;
   if(dx||dy)tgt=null;else if(tgt){const vx=tgt.x-S.px,vy=tgt.y-S.py,d=Math.hypot(vx,vy);if(d<4)tgt=null;else{dx=vx/d;dy=vy/d}}
-  if(dx||dy){const d=Math.hypot(dx,dy);S.px=Math.max(12,Math.min(W-12,S.px+dx/d*2.3));S.py=Math.max(104,Math.min(346,S.py+dy/d*2.3));S.walk+=.4;if(Math.abs(dx)>.2)S.dir=dx>0?1:-1}}
+  if(dx||dy){learn('move');const d=Math.hypot(dx,dy);S.px=Math.max(12,Math.min(W-12,S.px+dx/d*2.3));S.py=Math.max(104,Math.min(346,S.py+dy/d*2.3));S.walk+=.4;if(Math.abs(dx)>.2)S.dir=dx>0?1:-1}}
  const me=o=>Object.assign({k:'me',c:SC.me.c,b:SC.me.b},o);
  if(m==='play'||m==='title'){const b0=NB[3];dr.push([b0.fy,()=>animal(b0.fx,b0.fy)]);
   NB.forEach(n=>{const w=busy&&busy.n===n,px=w?n.fx-14:n.x,py=w?n.fy+6:n.y;dr.push([py,()=>{person(px,py,{k:n.k,c:n.c,b:n.b,baby:n.baby,dir:1,ph:w?t*.3:0,work:w,board:O()&&n.id==='b'&&S.day>=1&&S.day<4});
@@ -237,6 +253,8 @@ function frameBody(){x.clearRect(0,0,W,H);back();const dr=[],m=mode;
  if(m==='play'&&S.ap===3&&t%9===0)[...NB.map(n=>[n.x-12,n.y-58]),[HOME.x-12,HOME.y-48]].forEach(([a,b])=>parts.push({x:a,y:b,vx:.25+Math.random()*.3,vy:-.5,l:60,c:'#ffffff55',g:1}));
  parts.forEach(p=>{p.x+=p.vx;p.y+=p.vy;if(!p.g)p.vy+=.05;p.l--;x.fillStyle=p.c;x.fillRect(p.x,p.y,3,3)});parts=parts.filter(p=>p.l>0);
  const q=near();if(tgt&&tgt.auto&&q&&q.id===tgt.auto&&!(q.type!=='home'&&S.ap<1)){tgt=null;act()}
+ guide();
+ {const v=x.createRadialGradient(W/2,H/2,H*.62,W/2,H/2,H*.98);v.addColorStop(0,'rgba(0,0,0,0)');v.addColorStop(1,'rgba(20,12,4,.2)');x.fillStyle=v;x.fillRect(0,0,W,H)}
  const a=near(),ab=$('act');ab.style.display=a?'block':'none';if(a)ab.textContent=label(a);
  hud()}
 /* 화면 주사율(60·90·120Hz)과 상관없이 같은 속도로 흐르도록 1/60초 단위로 진행 */
