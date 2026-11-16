@@ -109,7 +109,7 @@ const rr=(a,b,w,h,r)=>{x.beginPath();x.roundRect(a,b,w,h,r);x.fill()};
 function mix(a,b,p){const A=parseInt(a.slice(1),16),B=parseInt(b.slice(1),16),f=(s)=>(((A>>s)&255)+(((B>>s)&255)-((A>>s)&255))*p)|0;return`rgb(${f(16)},${f(8)},${f(0)})`}
 /* 그림 에셋: assets/<섬>/<이름>.webp. 아직 안 왔거나 없으면 null → 코드 그림으로 대신 그린다 */
 const IMG={};function img(n){const p=`assets/${SC.theme}/${n}.webp`;let i=IMG[p];if(!i){i=IMG[p]=new Image();i.decoding='async';i.src=p}return i.complete&&i.naturalWidth?i:null}
-function preload(){[...'gdmb'.split(''),'me'].flatMap(i=>['front','back','left','right','walk_right_A','walk_right_B','walk_left_A','walk_left_B','work_right'].map(f=>'spr_'+i+'_'+f)).concat(['spr_sol_right','spr_sol_walk_right_A','spr_sol_walk_right_B','today_prop','prop_notice','prop_board','prop_slogan','overlay_village','overlay_today','fx_smoke_A','fx_smoke_B','clue','fx_fleet']).concat([...Object.values(PROPS[SC.theme]||{}).map(p=>'prop_'+p[0]),'bg_normal','bg_after','bg_today','house_normal','house_damaged','house_vacant','house_restored','tree_full','tree_sparse','animal_main','animal_extra']).forEach(img)}
+function preload(){[...'gdmb'.split(''),'me'].flatMap(i=>['front','back','left','right','walk_right_A','walk_right_B','walk_left_A','walk_left_B','work_right'].map(f=>'spr_'+i+'_'+f)).concat(['spr_sol_right','spr_sol_walk_right_A','spr_sol_walk_right_B','today_prop','prop_notice','prop_board','prop_slogan','overlay_village','overlay_today','fx_smoke_A','fx_smoke_B','clue','fx_fleet','work_g','work_d','work_m','field_empty','field_grown']).concat([...Object.values(PROPS[SC.theme]||{}).map(p=>'prop_'+p[0]),'bg_normal','bg_after','bg_today','house_normal','house_damaged','house_vacant','house_restored','tree_full','tree_sparse','animal_main','animal_extra']).forEach(img)}
 const J=()=>SC.theme==='jeju',O=()=>SC.theme==='oki',T=()=>SC.theme==='tw';
 const STN={jeju:'#3f3c3a',oki:'#b8b0a0',tw:'#8a8680'},GL={jeju:[15,-11],oki:[0,-8],tw:[17,-11]};
 /* 인물 스프라이트 96×144(원본 128×192), 발밑 기준점 (48,135). 정면·뒷모습만 있어 걷기는 몸을 들썩이는 것으로 표현 */
@@ -240,6 +240,10 @@ function props(){(PROPS[SC.theme]||[]).forEach(([n,w,a,b])=>{const I=img('prop_'
  const px=w==='X'?a:w==='F'?FIELD.x+a:NB[w].fx+a,py=w==='X'?b:w==='F'?FIELD.y+b:NB[w].fy+b;
  x.fillStyle='#00000026';el(px,py,I.naturalWidth*s*.32,2.5);x.drawImage(I,px-I.naturalWidth*s/2,py-I.naturalHeight*s*.94,I.naturalWidth*s,I.naturalHeight*s)})}
 function workplaces(){const j=J();
+ /* 그림 일터 240×120·밭 240×102(1920 기준) → 게임에서 1/3, 지정 중심에 맞춰 놓음 */
+ if(img('work_g')){[['g',0],['d',1],['m',2]].forEach(([k,n])=>{const I=img('work_'+k);if(I)x.drawImage(I,NB[n].fx-40,NB[n].fy-20,80,40)});
+  const E=img('field_empty'),G=img('field_grown');if(E)x.drawImage(E,FIELD.x-40,FIELD.y-17,80,34);if(G){x.save();x.globalAlpha=Math.min(1,S.food/5);x.drawImage(G,FIELD.x-40,FIELD.y-17,80,34);x.restore()}
+  props();return}
  const g0=NB[0],d0=NB[1],m0=NB[2];
  if(T()){x.fillStyle='#6a8a48';x.fillRect(g0.fx-26,g0.fy-12,52,24);x.fillStyle='#2f6a3a';for(let r=0;r<3;r++)for(let i=-22;i<=22;i+=7)el(g0.fx+i,g0.fy-7+r*8,4.4,3.2)}
  else if(j){x.fillStyle='#b89a50';x.fillRect(g0.fx-26,g0.fy-12,52,24);x.strokeStyle='#e0c060';x.lineWidth=2;for(let i=-22;i<=22;i+=6){const s=Math.sin(t*.05+i)*1+wind*5;x.beginPath();x.moveTo(g0.fx+i,g0.fy+10);x.lineTo(g0.fx+i+s,g0.fy-8);x.stroke()}}
