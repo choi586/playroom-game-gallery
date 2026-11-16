@@ -22,7 +22,7 @@ const POOM=window.POOM={errors:[],add(s){const e=[],need=(c,m)=>{if(!c)e.push(m)
  ['intro','after','rev','ok','fail','stormOk','stormNo','nowCap','year','label'].forEach(f=>need(typeof s[f]==='string',`${f} 항목이 없습니다`));
  if(e.length){POOM.errors.push(`[${s&&s.key||'?'}] `+e.join(' / '));return}SCS[s.key]=s},
  boot(){if(!Object.keys(SCS).length){card('<h2>시나리오를 불러오지 못했습니다</h2>'+(POOM.errors.join('<br>')||'scenarios 폴더의 파일을 확인해 주세요.'));return}title();requestAnimationFrame(loop)}};
-const QS=['닷새 동안 누구의 일을 거들지 어떻게 골랐나요? 듣지 못한 이야기는 누구의 것이었나요?','어른들은 왜 아이들 앞에서 말을 줄였을까요?','그날의 선택에서 다른 쪽을 골랐다면 무엇이 달라졌을까요? 달라지지 않는 것은 무엇일까요?','지금 내 곁에서 품을 주고받는 사람은 누구인가요?'];
+const QS=['처음 마을이 불안하다고 느낀 건 며칠째, 어떤 장면에서였나요?','게임은 왜 이야기를 다 들을 수 없게 만들었을까요? 실제 역사에서 듣지 못한 이야기는 왜 생길까요?','이웃을 살피고 신고하라는 압력 속에서 품을 주고받던 관계는 어떻게 바뀌었을까요?','다른 섬을 한 친구와 비교해 보세요. 무엇이 비슷하고, 무엇이 달랐나요?','지금 내 곁에서 품을 주고받는 사람은 누구인가요? 그 연결을 끊어 놓는 것은 무엇일까요?'];
 
 /* ───────── 상태 ───────── */
 let SC=null,NB,S,keys={},tgt=null,parts=[],rain=[],t=0,busy=null,mode='title',tm=0,wind=0,deco=[],clouds=[],dq=null,sold=-120;
