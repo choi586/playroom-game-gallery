@@ -49,7 +49,7 @@ function closeCard(){$('ov').classList.add('hide')}
 const open=()=>!$('ov').classList.contains('hide')||dq;
 function cap(s){const c=$('cap');if(s){c.textContent=s;c.classList.remove('hide')}else c.classList.add('hide')}
 function toast(s){const e=$('toast');e.textContent=s;e.style.opacity=1;clearTimeout(toast.h);toast.h=setTimeout(()=>e.style.opacity=0,2600)}
-function face(who){const n=NB.find(v=>v.name===who);if(n&&!(SC.theme==='oki'&&n.id==='b'))return`<img alt="" src="assets/${SC.theme}/portrait_${n.id}.webp" onerror="this.remove()">`;const o0=null,o=n?{k:n.k,c:n.c,b:n.b}:who==='나'?{k:'me',c:SC.me.c,b:SC.me.b}:null;if(!o)return'';
+function face(who){const n=NB.find(v=>v.name===who);if(n)return`<img alt="" src="assets/${SC.theme}/portrait_${n.id}.webp" onerror="this.remove()">`;const o0=null,o=n?{k:n.k,c:n.c,b:n.b}:who==='나'?{k:'me',c:SC.me.c,b:SC.me.b}:null;if(!o)return'';
  try{const c=document.createElement('canvas');c.width=c.height=116;const keep=x;x=c.getContext('2d');x.translate(58,104);x.scale(4.6,4.6);person(0,0,Object.assign({dir:1,ph:0},o));x=keep;return`<img alt="" src="${c.toDataURL()}">`}catch(e){return''}}
 function say(who,text,cb){dq={cb};$('dlg').innerHTML=`${face(who)}<div class="tx"><span class="go">계속 ▸</span><span class="who">${who}</span><br>${text}</div>`;$('dlg').classList.remove('hide')}
 $('dlg').onclick=()=>{if(!dq)return;const c=dq.cb;dq=null;$('dlg').classList.add('hide');c&&c()};
@@ -104,7 +104,7 @@ const rr=(a,b,w,h,r)=>{x.beginPath();x.roundRect(a,b,w,h,r);x.fill()};
 function mix(a,b,p){const A=parseInt(a.slice(1),16),B=parseInt(b.slice(1),16),f=(s)=>(((A>>s)&255)+(((B>>s)&255)-((A>>s)&255))*p)|0;return`rgb(${f(16)},${f(8)},${f(0)})`}
 /* 그림 에셋: assets/<섬>/<이름>.webp. 아직 안 왔거나 없으면 null → 코드 그림으로 대신 그린다 */
 const IMG={};function img(n){const p=`assets/${SC.theme}/${n}.webp`;let i=IMG[p];if(!i){i=IMG[p]=new Image();i.decoding='async';i.src=p}return i.complete&&i.naturalWidth?i:null}
-function preload(){[...'gdmb'.split(''),'me'].flatMap(i=>['front','back','left','right','walk_right_A','walk_right_B','walk_left_A','walk_left_B'].map(f=>'spr_'+i+'_'+f)).concat([...Object.values(PROPS[SC.theme]||{}).map(p=>'prop_'+p[0]),'bg_normal','bg_after','bg_today','house_normal','house_damaged','house_vacant','house_restored','tree_full','tree_sparse','animal_main','animal_extra']).forEach(img)}
+function preload(){[...'gdmb'.split(''),'me'].flatMap(i=>['front','back','left','right','walk_right_A','walk_right_B','walk_left_A','walk_left_B','work_right'].map(f=>'spr_'+i+'_'+f)).concat([...Object.values(PROPS[SC.theme]||{}).map(p=>'prop_'+p[0]),'bg_normal','bg_after','bg_today','house_normal','house_damaged','house_vacant','house_restored','tree_full','tree_sparse','animal_main','animal_extra']).forEach(img)}
 const J=()=>SC.theme==='jeju',O=()=>SC.theme==='oki',T=()=>SC.theme==='tw';
 const STN={jeju:'#3f3c3a',oki:'#b8b0a0',tw:'#8a8680'},GL={jeju:[15,-11],oki:[0,-8],tw:[17,-11]};
 /* 인물 스프라이트 96×144(원본 128×192), 발밑 기준점 (48,135). 정면·뒷모습만 있어 걷기는 몸을 들썩이는 것으로 표현 */
@@ -115,9 +115,10 @@ function sprite(px,py,o){if(!o.id)return false;
  if(o.walk&&side){const k=Math.floor(ph*.25)%4;if(k===0||k===2){const fr=k===0?'A':'B';let w=img(`spr_${o.id}_walk_${f}_${fr}`);
   if(!w&&f==='left'){w=img(`spr_${o.id}_walk_right_${fr}`);flip=!!w}if(w){I=w;walkImg=true}}
   else walkImg=!!(img(`spr_${o.id}_walk_${f}_A`)||img(`spr_${o.id}_walk_right_A`))}
- const s=.29,bob=o.walk&&!walkImg?Math.abs(Math.sin(ph))*1.6:0,sq=o.work?1-Math.abs(Math.sin(ph*.8))*.06:1;
+ let workImg=false;if(o.work&&f!=='back'){const w=img(`spr_${o.id}_work_right`);if(w){workImg=true;if(Math.floor(ph*.14)%3!==2){I=w;flip=f==='left'}else{I=img(`spr_${o.id}_${f==='left'?'left':'right'}`)||base;flip=false}}}
+ const s=.29,bob=o.walk&&!walkImg?Math.abs(Math.sin(ph))*1.6:0,sq=o.work&&!workImg?1-Math.abs(Math.sin(ph*.8))*.06:1;
  x.fillStyle='#0003';el(px,py+13,9,3);x.save();x.translate(px,py+13-bob);x.scale(flip?-1:1,sq);
- if(o.work)x.rotate(Math.sin(ph*.8)*.05);x.drawImage(I,-48*s,-135*s,96*s,144*s);x.restore();
+ if(o.work&&!workImg)x.rotate(Math.sin(ph*.8)*.05);x.drawImage(I,-48*s,-135*s,96*s,144*s);x.restore();
  if(o.board){x.fillStyle='#b08a50';x.fillRect(px-4,py-14,9,6)}return true}
 function person(px,py,o){if(sprite(px,py,o))return;const g=o.k==='sol';x.save();x.translate(px,py);x.scale(o.dir||1,1);const sw=Math.sin(o.ph||0);
  x.fillStyle='#0003';el(0,13,9,3);
