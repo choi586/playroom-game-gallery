@@ -26,12 +26,14 @@ async def play(b, k, vp, mob, shot=None):
     assert saved == 3, saved
     await pg.click('#ob')
     for _ in range(3):
-        await pg.wait_for_selector('#ob', timeout=15000)
-        if await pg.evaluate("document.getElementById('ob').textContent") == '처음으로': break
+        await pg.wait_for_selector('#ob, .box .dots', timeout=15000)
+        if await pg.query_selector('.box .dots'): break
         await pg.click('#ob')
     r = await pg.evaluate("[S.heard.length,S.ch.length,S.came.length,localStorage.getItem('poom-save-v1')]")
     assert r[0] == 8 and r[1] == 3 and r[2] == 4 and r[3] is None, r
     assert '들은 이야기 8/12' in await pg.evaluate("resultText()")
+    await pg.click('.rnav .btn >> nth=-1'); await pg.wait_for_timeout(150)
+    assert '들은 이야기' in await pg.inner_text('#box') and '처음으로' in await pg.inner_text('#box')
     if shot: await pg.screenshot(path=shot)
     await pg.close(); print('ok', k, r)
 async def extras(b):

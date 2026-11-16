@@ -251,12 +251,13 @@ function workplaces(){const j=J();
  x.fillStyle='#6a9a48';for(let i=0;i<Math.min(18,S.food*3);i++)el(FIELD.x-33+(i%9)*8,FIELD.y-9+(i>8?12:0),2.6,2.6);props()}
 
 /* 그림 배경: 지평선이 게임의 y≈100에 오도록 위로 60 올려 그리고, 길·돌담·물가·일터는 그 위에 얹는다 */
+function plume(bx,by,n,a){for(let i=0;i<n;i++){const k=i/n,px=bx+k*70+Math.sin(t*.01+i)*6,py=by-k*70,r=10+k*42,g=x.createRadialGradient(px,py,0,px,py,r);g.addColorStop(0,`rgba(58,52,50,${a*(1-k*.7)})`);g.addColorStop(1,'rgba(58,52,50,0)');x.fillStyle=g;x.fillRect(px-r,py-r,r*2,r*2)}}
 function backImg(BG,m,p){const j=J();x.drawImage(BG,0,-60,W,410);
  if(m==='storm'){x.fillStyle='rgba(40,48,60,.42)';x.fillRect(0,0,W,350)}
  else if(m==='play'&&p>0&&p<1){const g=x.createLinearGradient(0,0,0,350);g.addColorStop(0,`rgba(230,110,50,${.32*p})`);g.addColorStop(1,`rgba(230,140,70,${.12*p})`);x.fillStyle=g;x.fillRect(0,0,W,350)}
  if(m==='play'&&p>=1){x.fillStyle='rgba(10,14,50,.35)';x.fillRect(0,0,W,350);x.fillStyle='#fff';for(let i=0;i<40;i++){x.globalAlpha=.4+.6*Math.abs(Math.sin(t*.02+i));x.fillRect((i*97)%W,(i*53)%60,1.3,1.3)}x.globalAlpha=1;x.fillStyle='#f4eec8';el(96,30,10,10)}
- if(O()&&m==='play'&&S.day===3){for(let i=0;i<9;i++){x.fillStyle=`rgba(25,22,22,${.55-i*.05})`;el(520+i*7+Math.sin(t*.02+i)*4,84-i*9,12+i*3.4,10+i*1.6)}}
- if(O()&&m==='after'){for(let k=0;k<3;k++)for(let i=0;i<7;i++){x.fillStyle=`rgba(30,26,24,${.4-i*.05})`;el(330+k*110+i*6,80-i*10,11+i*3,9+i*1.5)}}
+ if(O()&&m==='play'&&S.day===3)plume(500,86,14,.22);
+ if(O()&&m==='after'){plume(330,80,12,.16);plume(470,84,12,.13)}
  if(O()&&!(m==='now'&&img('today_prop'))){x.fillStyle='rgba(30,24,20,.75)';el(122,86,6,4);if(m==='now'){const cs=['#e0564a','#f0c040','#5aa0d8','#70b860','#e88ab0'];for(let i=0;i<12;i++){x.fillStyle=cs[i%5];x.fillRect(111+i*1.6,77+Math.sin(i*.9)*2+i*.8,2,5)}}}
  if(j&&m==='play'&&S.day===2&&S.ap<=1)for(let i=0;i<4;i++){x.fillStyle=`rgba(255,170,80,${.5+.5*Math.sin(t*.1+i*2)})`;el(240+i*34,34+(i%2)*10,2.2,2.2)}
  if(T()&&m==='play'&&S.day===2&&S.ap<=1){x.fillStyle='#3a2e22';x.fillRect(452,40,14,9);x.fillStyle=`rgba(255,200,100,${.7+.3*Math.sin(t*.08)})`;x.fillRect(456,43,5,4)}
@@ -335,8 +336,18 @@ function resultText(){const li=NB.map(n=>n.st.map((s,i)=>S.heard.includes(n.id+i
  return `[품 — ${SC.label}]\n들은 이야기 ${S.heard.length}/12\n${li}\n\n그날의 선택\n${S.ch.map(c=>`- ${c[0]}: ${c[1]}`).join('\n')}\n\n배운 섬말: ${S.words.map(k=>SC.words[k][0]).join(', ')||'없음'}\n지붕을 함께 지킨 이웃: ${S.came.map(n=>n.name).join(', ')||'없음'}`}
 function copyResult(b){const tx=resultText(),done=()=>{b.textContent='복사했어요 ✓'},fb=()=>{const ta=document.createElement('textarea');ta.value=tx;ta.style.cssText='width:100%;height:9em;margin-top:10px;font:13px sans-serif';b.after(ta);ta.select();b.textContent='아래 글을 길게 눌러 복사하세요'};
  try{navigator.clipboard.writeText(tx).then(done,fb)}catch(e){fb()}}
-function reveal(){clearSave();const li=NB.map(n=>n.st.map((s,i)=>S.heard.includes(n.id+i)?`<li>${n.name} — ${s.t}</li>`:'<li class="no">· · ·</li>').join('')).join('');
- const ws=S.words.map(k=>SC.words[k][0].split(' ')[0]).join(' · ')||'없음';const cs=S.ch.map(c=>`<li>${c[0]} — ${c[1]}</li>`).join('');const others='<button class="btn" style="background:#2b2620;border:1px solid #666" onclick="copyResult(this)">📋 내 결과 복사 (모둠 토론용)</button><br>'+Object.values(SCS).filter(s=>s.key!==SC.key).map(s=>`<button class="btn alt" onclick="start('${s.key}')">${s.emoji||''} ${s.short||s.label}</button>`).join('');
- card(`${SC.rev}<h3>당신이 들은 이야기 ${S.heard.length} / 12</h3><ul>${li}</ul>듣지 못한 이야기는 여기 적히지 않습니다. 실제로도 많은 이야기가 그렇게, 들어 줄 사람을 만나지 못한 채 남았습니다.<h3>당신의 선택</h3><ul>${cs}</ul><h3>당신이 배운 섬말</h3>${ws}
+/* 엔딩 해설: 세 장으로 나눠 한 장에 한 가지만 — ① 이 마을은 ② 내가 들은 이야기 ③ 함께 이야기해요 */
+let RP=0;
+function reveal(){clearSave();RP=0;revealPage()}
+function revealPage(){const T=location.hash==='#teacher',P=T?3:2,dots=`<div class="dots">${Array.from({length:P},(_,i)=>`<i class="${i===RP?'on':''}"></i>`).join('')}</div>`;
+ const others=Object.values(SCS).filter(s=>s.key!==SC.key).map(s=>`<button class="btn alt" onclick="start('${s.key}')">${s.emoji||''} ${s.short||s.label}</button>`).join('');
+ const end=`<div class="endb"><button class="btn" style="background:#2b2620;border:1px solid #666" onclick="copyResult(this)">📋 내 결과 복사</button>${others}<button class="btn ghost" onclick="closeCard();title()">처음으로</button></div><div class="note">경희대학교 글로벌류큐·오키나와연구소</div>`;
+ const nav=`<div class="rnav">${RP>0?'<button class="btn ghost" onclick="RP--;revealPage()">◂ 이전</button>':''}${RP<P-1?'<button class="btn" onclick="RP++;revealPage()">다음 ▸</button>':''}</div>`;
+ let h='';
+ if(RP===0)h=SC.rev;
+ if(RP===1){const rows=NB.map(n=>`<div class="srow"><img src="assets/${SC.theme}/portrait_${n.id}.webp" alt="" onerror="this.style.visibility='hidden'"><b>${n.name}</b>${n.st.map((st,i)=>S.heard.includes(n.id+i)?`<span class="st on">${st.t}</span>`:'<span class="st"></span>').join('')}</div>`).join('');
+  h=`<h2>당신이 들은 이야기 <span class="big">${S.heard.length}</span><span class="of"> / 12</span></h2><div class="sgrid">${rows}</div><p class="cap2">빈칸은 끝내 듣지 못한 이야기입니다.</p><div class="mini"><span>배운 섬말</span>${S.words.map(k=>`<em>${SC.words[k][0].split(' ')[0]}</em>`).join('')||'<em>없음</em>'}</div>${T?'':end}`}
+ if(RP===2)h=`<h2>토론 질문</h2><ol class="qs">${QS.map(q=>`<li>${q}</li>`).join('')}</ol>${end}`;
+ card(dots+h+nav,null,null,true)}
 
-제주의 <b>수눌음</b>, 오키나와의 <b>유이마루</b>, 대만의 <b>방반(放伴)</b>. 섬마다 연결의 말이 있었습니다.<h3>함께 이야기해 봅시다</h3><ul>${QS.map(q=>`<li>${q}</li>`).join('')}</ul><div class="note">※ 데모 버전입니다. 등장인물과 마을은 창작이며, 역사적 배경 서술은 전공 연구진의 검토를 거쳐 보완할 예정입니다. 정식판에서는 실제 구술 음성과 사진 아카이브가 이 자리에 이어집니다.<br>경희대학교 글로벌류큐·오키나와연구소</div>${others}`,'처음으로',title,true)}
+
