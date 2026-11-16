@@ -49,13 +49,18 @@ function closeCard(){$('ov').classList.add('hide')}
 const open=()=>!$('ov').classList.contains('hide')||dq;
 function cap(s){const c=$('cap');if(s){c.textContent=s;c.classList.remove('hide')}else c.classList.add('hide')}
 function toast(s){const e=$('toast');e.textContent=s;e.style.opacity=1;clearTimeout(toast.h);toast.h=setTimeout(()=>e.style.opacity=0,2600)}
-function face(who){const n=NB.find(v=>v.name===who);if(n)return`<img alt="" src="assets/${SC.theme}/portrait_${n.id}.webp" onerror="this.remove()">`;const o0=null,o=n?{k:n.k,c:n.c,b:n.b}:who==='나'?{k:'me',c:SC.me.c,b:SC.me.b}:null;if(!o)return'';
+function face(who){const n=NB.find(v=>v.name===who);
+ if(who==='나'){const I=img('spr_me_front');if(I)try{const c=document.createElement('canvas');c.width=c.height=116;const g=c.getContext('2d');g.drawImage(I,26,30,44,44,0,0,116,116);return`<img alt="" src="${c.toDataURL()}">`}catch(e){}}
+ if(n)return`<img alt="" src="assets/${SC.theme}/portrait_${n.id}.webp" onerror="this.remove()">`;const o0=null,o=n?{k:n.k,c:n.c,b:n.b}:who==='나'?{k:'me',c:SC.me.c,b:SC.me.b}:null;if(!o)return'';
  try{const c=document.createElement('canvas');c.width=c.height=116;const keep=x;x=c.getContext('2d');x.translate(58,104);x.scale(4.6,4.6);person(0,0,Object.assign({dir:1,ph:0},o));x=keep;return`<img alt="" src="${c.toDataURL()}">`}catch(e){return''}}
 function say(who,text,cb){dq={cb};$('dlg').innerHTML=`${face(who)}<div class="tx"><span class="go">계속 ▸</span><span class="who">${who}</span><br>${text}</div>`;$('dlg').classList.remove('hide')}
 $('dlg').onclick=()=>{if(!dq)return;const c=dq.cb;dq=null;$('dlg').classList.add('hide');c&&c()};
 function dayStart(){save();S.ap=3;S.px=HOME.x;S.py=HOME.y+16;tgt=null;card(`<h2 style="font-size:1rem">${SC.year}</h2>`+SC.days[S.day],'하루 시작',()=>{const c=SC.ch[S.day];if(c)card(`<h2 style="font-size:1rem">그날 있었던 일</h2>${c.q}<br><button class="btn" onclick="pickC(0)">${c.a[0]}</button><button class="btn alt" onclick="pickC(1)">${c.a[1]}</button>`)})}
 function pickC(i){closeCard();const c=SC.ch[S.day];S.ch.push([c.t,c.a[i]]);chime(1);say('그날',c.r[i])}
-let hudS='',muted=false;function hud(){const play=mode==='play';const h=(play?`<span>📅 <b>${S.day+1}</b>/5일</span><span>✋ ${S.day?'':'남은 일 '}<b>${'●'.repeat(S.ap)}${'○'.repeat(3-S.ap)}</b></span><span>🍚 ${S.day?'':'양식 '}<b>${S.food}</b></span><span>👂 ${S.day?'':'들은 '}이야기 <b>${S.heard.length}</b></span>`:'<span>품 — 섬마을의 닷새</span>')+(mode!=='title'?`<button id="nb" onclick="book()">📖 섬말 수첩 ${S.words.length}</button><button id="mu" onclick="muted=!muted">${muted?'🔇':'🔊'}</button>`:'');if(h!==hudS){hudS=h;$('hud').innerHTML=h}}
+let hudS='',muted=false;function hud(){const play=mode==='play';const h=(play?`<span>📅 <b>${S.day+1}</b>/5일</span><span>✋ ${S.day?'':'남은 일 '}<b>${'●'.repeat(S.ap)}${'○'.repeat(3-S.ap)}</b></span><span>🍚 ${S.day?'':'양식 '}<b>${S.food}</b></span><span>👂 ${S.day?'':'들은 '}이야기 <b>${S.heard.length}</b></span>`:'<span>품 — 섬마을의 닷새</span>')+(mode!=='title'?`<button id="nb" onclick="book()">📖 섬말 수첩 ${S.words.length}</button><button id="qt" onclick="quit()">그만하기</button><button id="mu" onclick="muted=!muted">${muted?'🔇':'🔊'}</button>`:'');if(h!==hudS){hudS=h;$('hud').innerHTML=h}}
+function quit(){if(!$('ov').classList.contains('hide'))return;
+ card(`<h2 style="font-size:1.1rem">여기서 그만할까요?</h2>${mode==='play'?`${S.day+1}일째 아침 상태가 이 기기에 저장돼 있어요.\n첫 화면의 '이어서 하기'로 그 아침부터 다시 할 수 있어요.`:'엔딩 장면은 저장되지 않아요.\n다시 하면 처음부터 시작해요.'}<br><button class="btn" onclick="leave()">그만하기</button><button class="btn alt" onclick="closeCard()">계속하기</button>`)}
+function leave(){closeCard();busy=null;dq=null;$('dlg').classList.add('hide');cap();if(mode!=='play')clearSave();rain=[];title()}
 let AC,windG;function audio(){if(AC)return;try{AC=new(window.AudioContext||window.webkitAudioContext)();const b=AC.createBuffer(1,AC.sampleRate*2,AC.sampleRate),d=b.getChannelData(0);for(let i=0;i<d.length;i++)d[i]=Math.random()*2-1;const n=AC.createBufferSource();n.buffer=b;n.loop=true;const f=AC.createBiquadFilter();f.type='lowpass';f.frequency.value=420;windG=AC.createGain();windG.gain.value=0;n.connect(f);f.connect(windG);windG.connect(AC.destination);n.start()}catch(e){AC=null}}
 function chime(k){if(!AC||muted)return;try{const sc=[392,440,523,587,659,784],seq=k===2?[2,4,5]:k===1?[1,3]:[0,2];seq.forEach((n,i)=>{const o=AC.createOscillator(),g=AC.createGain(),t0=AC.currentTime+i*.16;o.type='sine';o.frequency.value=sc[n];g.gain.setValueAtTime(0,t0);g.gain.linearRampToValueAtTime(.09,t0+.03);g.gain.exponentialRampToValueAtTime(.0001,t0+.9);o.connect(g);g.connect(AC.destination);o.start(t0);o.stop(t0+1)})}catch(e){}}
 function book(){if(open())return;const ws=S.words.map(k=>`<div class="word"><b>${SC.words[k][0]}</b><span>${SC.words[k][1]}</span></div>`).join('');
@@ -104,7 +109,7 @@ const rr=(a,b,w,h,r)=>{x.beginPath();x.roundRect(a,b,w,h,r);x.fill()};
 function mix(a,b,p){const A=parseInt(a.slice(1),16),B=parseInt(b.slice(1),16),f=(s)=>(((A>>s)&255)+(((B>>s)&255)-((A>>s)&255))*p)|0;return`rgb(${f(16)},${f(8)},${f(0)})`}
 /* 그림 에셋: assets/<섬>/<이름>.webp. 아직 안 왔거나 없으면 null → 코드 그림으로 대신 그린다 */
 const IMG={};function img(n){const p=`assets/${SC.theme}/${n}.webp`;let i=IMG[p];if(!i){i=IMG[p]=new Image();i.decoding='async';i.src=p}return i.complete&&i.naturalWidth?i:null}
-function preload(){[...'gdmb'.split(''),'me'].flatMap(i=>['front','back','left','right','walk_right_A','walk_right_B','walk_left_A','walk_left_B','work_right'].map(f=>'spr_'+i+'_'+f)).concat(['spr_sol_right','spr_sol_walk_right_A','spr_sol_walk_right_B','today_prop']).concat([...Object.values(PROPS[SC.theme]||{}).map(p=>'prop_'+p[0]),'bg_normal','bg_after','bg_today','house_normal','house_damaged','house_vacant','house_restored','tree_full','tree_sparse','animal_main','animal_extra']).forEach(img)}
+function preload(){[...'gdmb'.split(''),'me'].flatMap(i=>['front','back','left','right','walk_right_A','walk_right_B','walk_left_A','walk_left_B','work_right'].map(f=>'spr_'+i+'_'+f)).concat(['spr_sol_right','spr_sol_walk_right_A','spr_sol_walk_right_B','today_prop','prop_notice','prop_board','prop_slogan']).concat([...Object.values(PROPS[SC.theme]||{}).map(p=>'prop_'+p[0]),'bg_normal','bg_after','bg_today','house_normal','house_damaged','house_vacant','house_restored','tree_full','tree_sparse','animal_main','animal_extra']).forEach(img)}
 const J=()=>SC.theme==='jeju',O=()=>SC.theme==='oki',T=()=>SC.theme==='tw';
 const STN={jeju:'#3f3c3a',oki:'#b8b0a0',tw:'#8a8680'},GL={jeju:[15,-11],oki:[0,-8],tw:[17,-11]};
 /* 인물 스프라이트 96×144(원본 128×192), 발밑 기준점 (48,135). 정면·뒷모습만 있어 걷기는 몸을 들썩이는 것으로 표현 */
@@ -119,7 +124,7 @@ function sprite(px,py,o){if(!o.id)return false;
  const s=.29,bob=o.walk&&!walkImg?Math.abs(Math.sin(ph))*1.6:0,sq=o.work&&!workImg?1-Math.abs(Math.sin(ph*.8))*.06:1;
  x.fillStyle='#0003';el(px,py+13,9,3);x.save();x.translate(px,py+13-bob);x.scale(flip?-1:1,sq);
  if(o.work&&!workImg)x.rotate(Math.sin(ph*.8)*.05);x.drawImage(I,-48*s,-135*s,96*s,144*s);x.restore();
- if(o.board){x.fillStyle='#b08a50';x.fillRect(px-4,py-14,9,6)}return true}
+ if(o.board&&f!=='back'){const B=img('prop_board'),bs=.15,lift=o.work&&workImg&&I!==base?6:0;if(B)x.drawImage(B,px-48*bs+(f==='right'?2:f==='left'?-2:0),py-1+lift-88*bs,96*bs,96*bs);else{x.fillStyle='#b08a50';x.fillRect(px-4,py-14,9,6)}}return true}
 function person(px,py,o){if(sprite(px,py,o))return;const g=o.k==='sol';x.save();x.translate(px,py);x.scale(o.dir||1,1);const sw=Math.sin(o.ph||0);
  x.fillStyle='#0003';el(0,13,9,3);
  x.fillStyle=g?'#33382e':o.b;x.fillRect(-5,3,4,10+sw);x.fillRect(1,3,4,10-sw);
@@ -261,14 +266,16 @@ function backImg(BG,m,p){const j=J();x.drawImage(BG,0,-60,W,410);
  x.strokeStyle='#ffffff66';x.lineWidth=1.2;for(let r=0;r<3;r++){x.beginPath();for(let i=0;i<=W;i+=8)x.lineTo(i,366+r*11+Math.sin(i*.05+t*(.04+wind*.08)+r)*(2+wind*4));x.stroke()}
  if(O()&&m==='after'){x.fillStyle='#2a2e30';for(let i=0;i<9;i++){const sx=30+i*72,sy=372+(i%3)*8;x.fillRect(sx,sy,34,5);x.fillRect(sx+10,sy-5,12,5);x.fillRect(sx+15,sy-10,2,5)}}
  x.fillStyle=STN[SC.theme];[[16,222,262],[362,222,262],[16,248,286],[338,248,286]].forEach(([a,b,c])=>{for(let i=a;i<a+c;i+=9)el(i+4.5,b+(i%18?0:1),5,4)});
- if(j&&m==='play'&&S.day>=2){x.fillStyle='#f4efe0';x.fillRect(268,208,9,11);x.fillStyle='#555';for(let i=0;i<4;i++)x.fillRect(269.5,210+i*2.2,6,.7)}
- if(T()&&m==='play'&&S.day>=1){x.fillStyle='#c8302a';x.fillRect(254,205,26,11);x.fillStyle='#fff';for(let i=0;i<5;i++)x.fillRect(257+i*4.4,208,2.6,5)}
+ const wallProp=(k,px,s)=>{const I=img(k);if(!I)return false;x.drawImage(I,px-48*s,226-88*s,96*s,96*s);return true};
+ if(j&&m==='play'&&S.day>=2&&!wallProp('prop_notice',272,.27)){x.fillStyle='#f4efe0';x.fillRect(268,208,9,11);x.fillStyle='#555';for(let i=0;i<4;i++)x.fillRect(269.5,210+i*2.2,6,.7)}
+ if(T()&&m==='play'&&S.day>=1&&!wallProp('prop_slogan',268,.3)){x.fillStyle='#c8302a';x.fillRect(254,205,26,11);x.fillStyle='#fff';for(let i=0;i<5;i++)x.fillRect(257+i*4.4,208,2.6,5)}
  if(m==='after'||m==='now')return;
  workplaces()}
 /* ───────── 메인 루프 ───────── */
 let lastPos=[0,0],moving=false;function dxMoving(){return moving}
 function frame(noDraw){moving=S&&(Math.abs(S.px-lastPos[0])+Math.abs(S.py-lastPos[1])>.3);if(S)lastPos=[S.px,S.py];t++;if(noDraw){const c=x;x=NOP;try{frameBody()}finally{x=c}}else frameBody()}
-function frameBody(){x.clearRect(0,0,W,H);back();const dr=[],m=mode;
+const KA=new Image();KA.src='assets/keyart.webp';
+function frameBody(){if(mode==='title'&&KA.complete&&KA.naturalWidth){x.drawImage(KA,0,0,W,H);$('act').style.display='none';hud();return}x.clearRect(0,0,W,H);back();const dr=[],m=mode;
  const hs=m==='after'?(T()?3:1):m==='now'?2:0;
  NB.forEach(n=>dr.push([n.y-12,()=>house(n.x,n.y-12,hs)]));dr.push([HOME.y,()=>{house(HOME.x,HOME.y,hs,true);
   if(m==='storm'&&tm>90&&S.came.length){x.strokeStyle='#d9c8a0';x.lineWidth=1.2;S.came.forEach(n=>{x.beginPath();x.moveTo(HOME.x,HOME.y-(img('house_normal')?58:46));x.lineTo(n.cx,n.cy-4);x.stroke()})}}]);
