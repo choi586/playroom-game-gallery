@@ -5,8 +5,9 @@ const $=id=>document.getElementById(id),cv=$('c'),W=640,H=400;let x=cv.getContex
 /* 따라잡기 프레임에서는 그리기를 건너뛰기 위한 빈 캔버스 대역 */
 const NOP=new Proxy({},{get:(o,k)=>k==='measureText'?()=>({width:0}):k==='createLinearGradient'||k==='createRadialGradient'?()=>({addColorStop(){}}):()=>{},set:()=>true});
 const RM=window.matchMedia&&matchMedia('(prefers-reduced-motion: reduce)').matches;let OFF=false;
-function fit(){if(x===NOP)return;const d=Math.min(3,window.devicePixelRatio||1)*Math.max(1,cv.clientWidth/W);cv.width=W*d;cv.height=H*d;x.setTransform(d,0,0,d,0,0)}
-addEventListener('resize',fit);setTimeout(fit,60);fit();
+function fit(){if(x===NOP)return;const d=Math.min(4,Math.max(1,(window.devicePixelRatio||1)*cv.clientWidth/W));cv.width=W*d;cv.height=H*d;x.setTransform(d,0,0,d,0,0)}
+addEventListener('resize',fit);document.addEventListener('fullscreenchange',()=>{document.body.classList.toggle('fs',!!document.fullscreenElement);setTimeout(fit,60)});
+function fsToggle(){try{if(document.fullscreenElement)document.exitFullscreen();else (document.documentElement.requestFullscreen||document.documentElement.webkitRequestFullscreen).call(document.documentElement).catch?.(()=>{})}catch(e){}}setTimeout(fit,60);fit();
 function rng(s){return()=>{s|=0;s=s+0x6D2B79F5|0;let t=Math.imul(s^s>>>15,1|s);t=t+Math.imul(t^t>>>7,61|t)^t;return((t^t>>>14)>>>0)/4294967296}}
 
 /* ───────── 시나리오 데이터 ───────── */
@@ -57,7 +58,7 @@ function say(who,text,cb){dq={cb};$('dlg').innerHTML=`${face(who)}<div class="tx
 $('dlg').onclick=()=>{if(!dq)return;const c=dq.cb;dq=null;$('dlg').classList.add('hide');c&&c()};
 function dayStart(){save();S.ap=3;S.px=HOME.x;S.py=HOME.y+16;tgt=null;card(`<h2 style="font-size:1rem">${SC.year}</h2>`+SC.days[S.day],'하루 시작',()=>{const c=SC.ch[S.day];if(c)card(`<h2 style="font-size:1rem">그날 있었던 일</h2>${c.q}<br><button class="btn" onclick="pickC(0)">${c.a[0]}</button><button class="btn alt" onclick="pickC(1)">${c.a[1]}</button>`)})}
 function pickC(i){closeCard();const c=SC.ch[S.day];S.ch.push([c.t,c.a[i]]);chime(1);say('그날',c.r[i])}
-let hudS='',muted=false;function hud(){const play=mode==='play';const h=(play?`<span>📅 <b>${S.day+1}</b>/5일</span><span>✋ ${S.day?'':'남은 일 '}<b>${'●'.repeat(S.ap)}${'○'.repeat(3-S.ap)}</b></span><span>🍚 ${S.day?'':'양식 '}<b>${S.food}</b></span><span>👂 ${S.day?'':'들은 '}이야기 <b>${S.heard.length}</b></span>`:'<span>품 — 섬마을의 닷새</span>')+(mode!=='title'?`<button id="nb" onclick="book()">📖 섬말 수첩 ${S.words.length}</button><button id="qt" onclick="quit()">그만하기</button><button id="mu" onclick="muted=!muted">${muted?'🔇':'🔊'}</button>`:'');if(h!==hudS){hudS=h;$('hud').innerHTML=h}}
+let hudS='',muted=false;function hud(){const play=mode==='play';const h=(play?`<span>📅 <b>${S.day+1}</b>/5일</span><span>✋ ${S.day?'':'남은 일 '}<b>${'●'.repeat(S.ap)}${'○'.repeat(3-S.ap)}</b></span><span>🍚 ${S.day?'':'양식 '}<b>${S.food}</b></span><span>👂 ${S.day?'':'들은 '}이야기 <b>${S.heard.length}</b></span>`:'<span>품 — 섬마을의 닷새</span>')+(mode==='title'?`<button id="fs" style="margin-left:auto" onclick="fsToggle()">⛶ 전체 화면</button>`:'')+(mode!=='title'?`<button id="nb" onclick="book()">📖 섬말 수첩 ${S.words.length}</button><button id="fs" onclick="fsToggle()" title="전체 화면">⛶</button><button id="qt" onclick="quit()">그만하기</button><button id="mu" onclick="muted=!muted">${muted?'🔇':'🔊'}</button>`:'');if(h!==hudS){hudS=h;$('hud').innerHTML=h}}
 function quit(){if(!$('ov').classList.contains('hide'))return;
  card(`<h2 style="font-size:1.1rem">여기서 그만할까요?</h2>${mode==='play'?`${S.day+1}일째 아침 상태가 이 기기에 저장돼 있어요.\n첫 화면의 '이어서 하기'로 그 아침부터 다시 할 수 있어요.`:'엔딩 장면은 저장되지 않아요.\n다시 하면 처음부터 시작해요.'}<br><button class="btn" onclick="leave()">그만하기</button><button class="btn alt" onclick="closeCard()">계속하기</button>`)}
 function leave(){closeCard();busy=null;dq=null;$('dlg').classList.add('hide');cap();if(mode!=='play')clearSave();rain=[];title()}
